@@ -24,7 +24,7 @@ class CellType:
         self.transcript_dists = t_dists
 
     def __str__(self):
-        dists = reduce(lambda all, ts: f'{all}\n\t{ts}', self.transcript_dists)
+        dists = reduce(lambda cumulated, ts: f'{cumulated}\n\t{ts}', self.transcript_dists)
         return f'Cell type "{self.name}":\n{dists}'
 
 
