@@ -1,1 +1,4 @@
-rpy2==3.2.6
+numpy==1.19.0
+pandas==1.0.5
+tensorflow==2.2.0
+Pillow==7.1.2
