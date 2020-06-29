@@ -46,11 +46,10 @@ class CellType:
         sampled_tcs = random.choice(self.__generate_all_transcripts(),
                                     size=transcripts_count,
                                     replace=False)
-
-        def generate_line(line, label):
-            return f'{line},{count_nonzero(sampled_tcs == label)}'
-
-        return reduce(generate_line, self.transcript_labels, self.name)
+        result = [self.name]
+        for label in self.transcript_labels:
+            result.append(str(count_nonzero(sampled_tcs == label)))
+        return ','.join(result)
 
     def __generate_all_transcripts(self):
         result = []
