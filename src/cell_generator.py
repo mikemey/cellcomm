@@ -53,11 +53,11 @@ class CellType:
         return reduce(generate_line, self.transcript_labels, self.name)
 
     def __generate_all_transcripts(self):
-        def generate_transcripts(cumulated, dist):
+        result = []
+        for dist in self.transcript_dists:
             tc_count = random.normal(dist.mean, dist.sd)
-            return cumulated + [dist.label] * int(tc_count)
-
-        return reduce(generate_transcripts, self.transcript_dists, [])
+            result.extend([dist.label] * int(tc_count))
+        return result
 
 
 def generate_cell_type(type_name, tc_labels, expressed_ratio, dist_range, dist_variance):
