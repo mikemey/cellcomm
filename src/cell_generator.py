@@ -79,24 +79,13 @@ def generate_csv_records(records_count, transcripts_count, cell_types):
     print()
 
 
-if __name__ == '__main__':
-    transcript_labels_count = 100
-    count = 180
-    max_transcripts_per_record = int(transcript_labels_count * 0.3)
-    batch_size = 100
-
-    if len(sys.argv) < 2:
-        print('ERROR: file path required')
-        exit(-1)
-    data_file = sys.argv[1]
-    if os.path.exists(data_file):
-        print(f'ERROR: file exists already: {data_file}')
-        exit(-2)
-
-    print('generate transcript labels...')
-    transcript_labels = generate_transcript_labels(transcript_labels_count)
+def generate_to_file(file_name,
+                     records_count=10000,
+                     transcripts_count=10000,
+                     max_transcripts_per_record=3000):
+    transcript_labels = generate_transcript_labels(transcripts_count)
     records = generate_csv_records(
-        records_count=count,
+        records_count=records_count,
         transcripts_count=max_transcripts_per_record,
         cell_types=[
             generate_cell_type('c01', transcript_labels, 0.4, (10, 1000), (10, 500)),
@@ -117,6 +106,20 @@ if __name__ == '__main__':
         ])
 
     print('generate/write records:')
-    with open(data_file, 'a') as f:
+    with open(file_name, 'a') as f:
+        f.write(generate_csv_header(transcript_labels))
         f.writelines(records)
     print('DONE')
+
+
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print('ERROR: file path required')
+        exit(-1)
+
+    data_file = sys.argv[1]
+    if os.path.exists(data_file):
+        print(f'ERROR: file exists already: {data_file}')
+        exit(-2)
+
+    generate_to_file(data_file)

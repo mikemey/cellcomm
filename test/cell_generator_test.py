@@ -1,3 +1,5 @@
+import os
+import shutil
 import unittest
 from types import GeneratorType
 
@@ -6,8 +8,17 @@ import numpy as np
 import cell_generator as cg
 from cell_generator import CellType, TranscriptDistribution
 
+TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
+GENERATED_TEST_FILE = os.path.join(TEST_DATA_DIR, 'test-file.csv')
+EXPECTED_TEST_FILE = os.path.join(os.path.dirname(__file__), 'cell_generator_expected.csv')
+
 
 class CellGenTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        shutil.rmtree(TEST_DATA_DIR, ignore_errors=True)
+        os.mkdir(TEST_DATA_DIR)
+
     def test_generate_small_transcript_labels(self):
         tcs = cg.generate_transcript_labels(4)
         self.assertListEqual(['AAA', 'AAB', 'AAC', 'AAD'], tcs)
@@ -56,7 +67,7 @@ class CellGenTest(unittest.TestCase):
         record = ctype.generate_csv_record(3)
         self.assertEqual('test,2,0,1\n', record)
 
-    def test_full_example(self):
+    def test_generate_full_example(self):
         np.random.seed(0)
         labels = cg.generate_transcript_labels(50)
         records = cg.generate_csv_records(
@@ -72,3 +83,10 @@ class CellGenTest(unittest.TestCase):
         self.assertEqual(10, len(record_list))
         for actual, expected in zip(record_list, ['c3', 'c3', 'c1', 'c3', 'c2', 'c3', 'c1', 'c3', 'c1', 'c2']):
             self.assertEqual(actual[:2], expected)
+
+    def test_write_file(self):
+        np.random.seed(0)
+        cg.generate_to_file(GENERATED_TEST_FILE, 2, 3, 2)
+        with open(GENERATED_TEST_FILE) as f:
+            content = f.read()
+        self.assertEqual('cell_type,AAA,AAB,AAC\nc01,0,0,2\nc07,0,0,2\n', content)
