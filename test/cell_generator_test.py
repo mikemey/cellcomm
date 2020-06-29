@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 
 import cell_generator as cg
+from cell_generator import CellType, TranscriptDistribution
 
 
 class CellGenTest(unittest.TestCase):
@@ -32,9 +33,19 @@ class CellGenTest(unittest.TestCase):
             name, tcs, expressed_ratio=0.6, dist_range=(10, 10000), dist_variance=(10, 400)
         )
         self.assertEqual(name, ctype.name)
+        self.assertEqual(tcs, ctype.transcript_labels)
         self.__assert_cell_transcript(ctype.transcript_dists[0], 4869, 205)
         self.__assert_cell_transcript(ctype.transcript_dists[1], 9235, 221)
 
     def __assert_cell_transcript(self, transcript, mean, sd):
         self.assertEqual(transcript.mean, mean)
         self.assertEqual(transcript.sd, sd)
+
+    def test_generate_cell_record(self):
+        np.random.seed(10)
+        tc_labels = ['t1', 't2', 't3']
+        transcripts = [TranscriptDistribution(tc_labels[0], 10, 2), TranscriptDistribution(tc_labels[2], 3, 1)]
+        ctype = CellType('test', tc_labels, transcripts)
+        record = ctype.generate_record(3)
+        self.assertEqual('test,2,0,1', record)
+        print(record)
