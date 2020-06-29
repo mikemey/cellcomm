@@ -49,7 +49,7 @@ class CellGenTest(unittest.TestCase):
         transcripts = [TranscriptDistribution(tc_labels[0], 10, 2), TranscriptDistribution(tc_labels[2], 3, 1)]
         ctype = CellType('test', tc_labels, transcripts)
         record = ctype.generate_record(3)
-        self.assertEqual('test,2,0,1', record)
+        self.assertEqual('test,2,0,1\n', record)
 
     def test_full_example(self):
         np.random.seed(0)

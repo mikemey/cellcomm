@@ -49,7 +49,7 @@ class CellType:
         result = [self.name]
         for label in self.transcript_labels:
             result.append(str(count_nonzero(sampled_tcs == label)))
-        return ','.join(result)
+        return ','.join(result) + '\n'
 
     def __generate_all_transcripts(self):
         result = []
