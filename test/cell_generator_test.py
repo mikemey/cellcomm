@@ -1,4 +1,5 @@
 import unittest
+from types import GeneratorType
 
 import numpy as np
 
@@ -43,10 +44,26 @@ class CellGenTest(unittest.TestCase):
         self.assertEqual(sd, transcript.sd)
 
     def test_generate_cell_record(self):
-        np.random.seed(10)
+        np.random.seed(6)
         tc_labels = ['t1', 't2', 't3']
         transcripts = [TranscriptDistribution(tc_labels[0], 10, 2), TranscriptDistribution(tc_labels[2], 3, 1)]
         ctype = CellType('test', tc_labels, transcripts)
         record = ctype.generate_record(3)
         self.assertEqual('test,2,0,1', record)
-        print(record)
+
+    def test_full_example(self):
+        np.random.seed(0)
+        labels = cg.generate_transcript_labels(50)
+        records = cg.generate_records(
+            records_count=10,
+            transcripts_count=20,
+            cell_types=[
+                cg.generate_cell_type('c1', labels, 0.2, (100, 1000), (10, 100)),
+                cg.generate_cell_type('c2', labels, 0.25, (120, 2000), (50, 500)),
+                cg.generate_cell_type('c3', labels, 0.15, (20, 500), (20, 100))
+            ])
+        self.assertEqual(GeneratorType, type(records))
+        record_list = list(records)
+        self.assertEqual(10, len(record_list))
+        for actual, expected in zip(record_list, ['c3', 'c3', 'c1', 'c3', 'c2', 'c3', 'c1', 'c3', 'c1', 'c2']):
+            self.assertEqual(actual[:2], expected)

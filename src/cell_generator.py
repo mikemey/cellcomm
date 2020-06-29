@@ -41,7 +41,9 @@ class CellType:
         return f'Cell type "{self.name}":\n\t{dists}'
 
     def generate_record(self, transcripts_count):
-        sampled_tcs = random.choice(self.__generate_all_transcripts(), transcripts_count)
+        sampled_tcs = random.choice(self.__generate_all_transcripts(),
+                                    size=transcripts_count,
+                                    replace=False)
 
         def generate_line(line, label):
             return f'{line},{count_nonzero(sampled_tcs == label)}'
@@ -62,3 +64,9 @@ def generate_cell_type(type_name, tc_labels, expressed_ratio, dist_range, dist_v
     tc_dists = [TranscriptDistribution(label, random.randint(*dist_range), random.randint(*dist_variance))
                 for label in selected]
     return CellType(type_name, tc_labels, tc_dists)
+
+
+def generate_records(records_count, transcripts_count, cell_types):
+    for i in range(records_count):
+        ctype = random.choice(cell_types)
+        yield ctype.generate_record(transcripts_count)
