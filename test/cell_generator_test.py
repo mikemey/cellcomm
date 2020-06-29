@@ -34,12 +34,13 @@ class CellGenTest(unittest.TestCase):
         )
         self.assertEqual(name, ctype.name)
         self.assertEqual(tcs, ctype.transcript_labels)
-        self.__assert_cell_transcript(ctype.transcript_dists[0], 4869, 205)
-        self.__assert_cell_transcript(ctype.transcript_dists[1], 9235, 221)
+        self.__assert_transcript_type(ctype.transcript_dists[0], 'AAC', 4869, 205)
+        self.__assert_transcript_type(ctype.transcript_dists[1], 'AAA', 9235, 221)
 
-    def __assert_cell_transcript(self, transcript, mean, sd):
-        self.assertEqual(transcript.mean, mean)
-        self.assertEqual(transcript.sd, sd)
+    def __assert_transcript_type(self, transcript, label, mean, sd):
+        self.assertEqual(label, transcript.label)
+        self.assertEqual(mean, transcript.mean)
+        self.assertEqual(sd, transcript.sd)
 
     def test_generate_cell_record(self):
         np.random.seed(10)
