@@ -43,18 +43,23 @@ class CellGenTest(unittest.TestCase):
         self.assertEqual(mean, transcript.mean)
         self.assertEqual(sd, transcript.sd)
 
-    def test_generate_cell_record(self):
+    def test_generate_csv_header(self):
+        labels = cg.generate_transcript_labels(5)
+        header = cg.generate_csv_header(labels)
+        self.assertEqual('cell_type,AAA,AAB,AAC,AAD,AAE\n', header)
+
+    def test_generate_csv_cell_record(self):
         np.random.seed(6)
         tc_labels = ['t1', 't2', 't3']
         transcripts = [TranscriptDistribution(tc_labels[0], 10, 2), TranscriptDistribution(tc_labels[2], 3, 1)]
         ctype = CellType('test', tc_labels, transcripts)
-        record = ctype.generate_record(3)
+        record = ctype.generate_csv_record(3)
         self.assertEqual('test,2,0,1\n', record)
 
     def test_full_example(self):
         np.random.seed(0)
         labels = cg.generate_transcript_labels(50)
-        records = cg.generate_records(
+        records = cg.generate_csv_records(
             records_count=10,
             transcripts_count=20,
             cell_types=[

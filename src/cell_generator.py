@@ -42,7 +42,7 @@ class CellType:
         dists = reduce(lambda cumulated, ts: f'{cumulated}\n\t{ts}', ts_as_str)
         return f'Cell type "{self.name}":\n\t{dists}'
 
-    def generate_record(self, transcripts_count):
+    def generate_csv_record(self, transcripts_count):
         sampled_tcs = random.choice(self.__generate_all_transcripts(),
                                     size=transcripts_count,
                                     replace=False)
@@ -67,11 +67,15 @@ def generate_cell_type(type_name, tc_labels, expressed_ratio, dist_range, dist_v
     return CellType(type_name, tc_labels, tc_dists)
 
 
-def generate_records(records_count, transcripts_count, cell_types):
+def generate_csv_header(labels):
+    return 'cell_type,' + ','.join(labels) + '\n'
+
+
+def generate_csv_records(records_count, transcripts_count, cell_types):
     for i in range(records_count):
         print(f'generate {i + 1} / {records_count}', end='\r', flush=True)
-        ctype = random.choice(cell_types)
-        yield ctype.generate_record(transcripts_count)
+        cell_type = random.choice(cell_types)
+        yield cell_type.generate_csv_record(transcripts_count)
     print()
 
 
@@ -91,7 +95,7 @@ if __name__ == '__main__':
 
     print('generate transcript labels...')
     transcript_labels = generate_transcript_labels(transcript_labels_count)
-    records = generate_records(
+    records = generate_csv_records(
         records_count=count,
         transcripts_count=max_transcripts_per_record,
         cell_types=[
