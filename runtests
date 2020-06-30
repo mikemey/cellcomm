@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
 export PYTHONPATH=src
-python3 -m pytest -s "$*"
+python3 -m pytest -p no:warnings -s "$*"
