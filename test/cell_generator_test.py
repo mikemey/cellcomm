@@ -6,7 +6,7 @@ from types import GeneratorType
 import numpy as np
 
 import cell_generator as cg
-from cell_generator import CellType, TranscriptDistribution
+from cell_generator import CellType, FeatureDistribution
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 GENERATED_TEST_FILE = os.path.join(TEST_DATA_DIR, 'test-file.csv')
@@ -20,56 +20,56 @@ class CellGenTest(unittest.TestCase):
         os.mkdir(TEST_DATA_DIR)
 
     def test_generate_small_transcript_labels(self):
-        tcs = cg.generate_transcript_labels(4)
-        self.assertListEqual(['AAA', 'AAB', 'AAC', 'AAD'], tcs)
+        features = cg.generate_feature_labels(4)
+        self.assertListEqual(['AAA', 'AAB', 'AAC', 'AAD'], features)
 
     def test_generate_large_transcript_labels(self):
         count = 2000
-        tcs = cg.generate_transcript_labels(count)
-        self.assertEqual(count, len(tcs))
-        self.assertEqual('AAA', tcs[0])
-        self.assertEqual('CYX', tcs[count - 1])
+        features = cg.generate_feature_labels(count)
+        self.assertEqual(count, len(features))
+        self.assertEqual('AAA', features[0])
+        self.assertEqual('CYX', features[count - 1])
 
     def test_reject_too_many_transcript_labels(self):
         too_many = pow(26, 3) + 1
         with self.assertRaises(AssertionError) as ctx:
-            cg.generate_transcript_labels(too_many)
+            cg.generate_feature_labels(too_many)
         self.assertEqual(f'too many transcripts: {too_many}', str(ctx.exception))
 
     def test_generate_cell_type(self):
         np.random.seed(0)
-        tcs = cg.generate_transcript_labels(5)
+        features = cg.generate_feature_labels(5)
         name = 'test-type'
 
         ctype = cg.generate_cell_type(
-            name, tcs, expressed_ratio=0.6, dist_range=(10, 10000), dist_variance=(10, 400)
+            name, features, expressed_ratio=0.6, dist_range=(10, 10000), dist_variance=(10, 400)
         )
         self.assertEqual(name, ctype.name)
-        self.assertEqual(tcs, ctype.transcript_labels)
-        self.__assert_transcript_type(ctype.transcript_dists[0], 'AAC', 4869, 205)
-        self.__assert_transcript_type(ctype.transcript_dists[1], 'AAA', 9235, 221)
+        self.assertEqual(features, ctype.feature_labels)
+        self.__assert_transcript_type(ctype.feature_dists[0], 'AAC', 4869, 205)
+        self.__assert_transcript_type(ctype.feature_dists[1], 'AAA', 9235, 221)
 
-    def __assert_transcript_type(self, transcript, label, mean, sd):
-        self.assertEqual(label, transcript.label)
-        self.assertEqual(mean, transcript.mean)
-        self.assertEqual(sd, transcript.sd)
+    def __assert_transcript_type(self, feature_dist, label, mean, sd):
+        self.assertEqual(label, feature_dist.label)
+        self.assertEqual(mean, feature_dist.mean)
+        self.assertEqual(sd, feature_dist.sd)
 
     def test_generate_csv_header(self):
-        labels = cg.generate_transcript_labels(5)
+        labels = cg.generate_feature_labels(5)
         header = cg.generate_csv_header(labels)
         self.assertEqual('cell_type,AAA,AAB,AAC,AAD,AAE\n', header)
 
     def test_generate_csv_cell_record(self):
         np.random.seed(6)
-        tc_labels = ['t1', 't2', 't3']
-        transcripts = [TranscriptDistribution(tc_labels[0], 10, 2), TranscriptDistribution(tc_labels[2], 3, 1)]
-        ctype = CellType('test', tc_labels, transcripts)
+        feature_labels = ['t1', 't2', 't3']
+        features = [FeatureDistribution(feature_labels[0], 10, 2), FeatureDistribution(feature_labels[2], 3, 1)]
+        ctype = CellType('test', feature_labels, features)
         record = ctype.generate_csv_record(3)
         self.assertEqual('test,2,0,1\n', record)
 
     def test_generate_full_example(self):
         np.random.seed(0)
-        labels = cg.generate_transcript_labels(50)
+        labels = cg.generate_feature_labels(50)
         records = cg.generate_csv_records(
             records_count=10,
             transcripts_count=20,
