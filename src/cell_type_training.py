@@ -14,7 +14,8 @@ def load_matrix(file):
 
 class CellTraining:
     def __init__(self, matrix_file=CELL_MATRIX_FILE, batch_size=32):
+        self.batch_size = batch_size
         self.data = load_matrix(matrix_file)
 
-    def sample_cell_data(self):
-        pass
+    def sample_cell_data(self, random_seed=None):
+        return self.data.sample(self.batch_size, random_state=random_seed)

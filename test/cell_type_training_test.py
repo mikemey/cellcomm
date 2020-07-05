@@ -24,13 +24,15 @@ class TrainingTestCase(unittest.TestCase):
 
     def test_load_matrix_and_pivot(self):
         cell_batch = load_matrix(TEST_TRAINING_FILE)
-        print(cell_batch)
         self.assertEqual((5, 11), cell_batch.shape)
         self.__assert_data(TEST_MATRIX_CONTENT, cell_batch)
 
-    # def test_sample_cell_data(self):
-    #     pass
-    #
+    def test_sample_cell_data(self):
+        sampled = self.cell_training.sample_cell_data(0)
+        self.assertEqual((TEST_BATCH_SIZE, 11), sampled.shape)
+        self.__assert_data([TEST_MATRIX_CONTENT[2],
+                            TEST_MATRIX_CONTENT[0],
+                            TEST_MATRIX_CONTENT[1]], sampled)
 
     def __assert_data(self, expected, actual):
         eq_matrix = tf.math.equal(expected, actual)
