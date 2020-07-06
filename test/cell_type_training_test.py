@@ -57,6 +57,10 @@ class TrainingTestCase(unittest.TestCase):
         self.assertEqual((None, 1), discriminator.output_shape)
         self.assertEqual(tf.nn.sigmoid, discriminator.layers[-1].activation)
 
-    def test_create_random_encoding(self):
-        # encoding vector values between 0-1
-        pass
+    def test_create_random_encoding_vector(self):
+        cell_bigan = CellBiGan(encoding_size=20, gene_size=1)
+        for _ in range(100):
+            cell_encoding = cell_bigan._random_encoding_vector()
+            self.assertEqual(20, len(cell_encoding))
+            self.assertTrue(np.all(cell_encoding > 0), f'cell_encoding with values < 0:\n{cell_encoding}')
+            self.assertTrue(np.all(cell_encoding < 1), f'cell_encoding with values > 1:\n{cell_encoding}')

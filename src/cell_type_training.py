@@ -38,6 +38,7 @@ def _build_discriminator(encoding_size, gene_size):
 
 class CellBiGan:
     def __init__(self, encoding_size, gene_size):
+        self.encoding_size = encoding_size
         self._generator = _build_generator(encoding_size, gene_size)
         self._encoder = _build_encoder(encoding_size, gene_size)
         self._discriminator = _build_discriminator(encoding_size, gene_size)
@@ -46,6 +47,9 @@ class CellBiGan:
         self._generator.summary()
         self._encoder.summary()
         self._discriminator.summary()
+
+    def _random_encoding_vector(self):
+        return tf.random.uniform(shape=(self.encoding_size,), minval=0, maxval=1)
 
 
 class CellTraining:
