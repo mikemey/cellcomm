@@ -53,7 +53,7 @@ class TrainingTestCase(unittest.TestCase):
 
     def test_discriminator_model(self):
         discriminator = CellBiGan(encoding_size=4, gene_size=5)._discriminator
-        self.assertEqual((None, 4, 5), discriminator.input_shape)
+        self.assertEqual([(None, 4), (None, 5)], discriminator.input_shape)
         self.assertEqual((None, 1), discriminator.output_shape)
         self.assertEqual(tf.nn.sigmoid, discriminator.layers[-1].activation)
 

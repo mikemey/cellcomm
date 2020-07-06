@@ -29,11 +29,12 @@ def _build_encoder(encoding_size, gene_size):
 
 
 def _build_discriminator(encoding_size, gene_size):
-    inputs = layers.Input(shape=(encoding_size, gene_size))
-    x = layers.Dense(encoding_size + gene_size, activation=tf.nn.relu)(inputs)
-    x = layers.Flatten()(x)
+    encoding_in = layers.Input(shape=encoding_size, name='encoding_input')
+    cell_in = layers.Input(shape=gene_size, name='cell_input')
+
+    x = layers.Concatenate()([encoding_in, cell_in])
     prob = layers.Dense(1, activation=tf.nn.sigmoid)(x)
-    return Model(inputs, prob, name='Cell discriminator')
+    return Model([encoding_in, cell_in], prob, name='Cell discriminator')
 
 
 class CellBiGan:
