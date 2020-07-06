@@ -40,18 +40,22 @@ class TrainingTestCase(unittest.TestCase):
         self.assertTrue(np.all(eq_matrix), f'\tExpected:\n{expected}\n\tActual:\n{actual}')
 
     def test_generator_model(self):
-        cell_bigan = CellBiGan(encoding_size=15, gene_size=1000)
-        generator = cell_bigan._generator
+        generator = CellBiGan(encoding_size=15, gene_size=1000)._generator
         self.assertEqual((None, 15), generator.input_shape)
         self.assertEqual((None, 1000), generator.output_shape)
         self.assertEqual(tf.nn.relu, generator.layers[-1].activation)
 
     def test_encode_model(self):
-        cell_bigan = CellBiGan(encoding_size=12, gene_size=100)
-        encoder = cell_bigan._encoder
+        encoder = CellBiGan(encoding_size=12, gene_size=100)._encoder
         self.assertEqual((None, 100), encoder.input_shape)
         self.assertEqual((None, 12), encoder.output_shape)
         self.assertEqual(tf.nn.sigmoid, encoder.layers[-1].activation)
+
+    def test_discriminator_model(self):
+        discriminator = CellBiGan(encoding_size=4, gene_size=5)._discriminator
+        self.assertEqual((None, 4, 5), discriminator.input_shape)
+        self.assertEqual((None, 1), discriminator.output_shape)
+        self.assertEqual(tf.nn.sigmoid, discriminator.layers[-1].activation)
 
     def test_create_random_encoding(self):
         # encoding vector values between 0-1

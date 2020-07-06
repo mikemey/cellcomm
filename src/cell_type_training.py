@@ -28,15 +28,24 @@ def _build_encoder(encoding_size, gene_size):
     return Model(cell_in, encoding_out, name='Cell encoder')
 
 
+def _build_discriminator(encoding_size, gene_size):
+    inputs = layers.Input(shape=(encoding_size, gene_size))
+    x = layers.Dense(encoding_size + gene_size, activation=tf.nn.relu)(inputs)
+    x = layers.Flatten()(x)
+    prob = layers.Dense(1, activation=tf.nn.sigmoid)(x)
+    return Model(inputs, prob, name='Cell discriminator')
+
+
 class CellBiGan:
     def __init__(self, encoding_size, gene_size):
         self._generator = _build_generator(encoding_size, gene_size)
         self._encoder = _build_encoder(encoding_size, gene_size)
-        self.summary()
+        self._discriminator = _build_discriminator(encoding_size, gene_size)
 
     def summary(self):
         self._generator.summary()
         self._encoder.summary()
+        self._discriminator.summary()
 
 
 class CellTraining:
