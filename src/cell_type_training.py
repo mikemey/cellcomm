@@ -2,7 +2,7 @@ import os
 
 import pandas as pd
 import tensorflow as tf
-from tensorflow.keras import Model, layers
+from tensorflow.keras import Model, layers, optimizers, losses
 
 CELL_MATRIX_FILE = os.path.join(os.path.dirname(__file__),
                                 '..', 'data', 'GSE122930_Sham_1_week_matrix.mtx')
@@ -38,11 +38,26 @@ def _build_discriminator(encoding_size, gene_size):
 
 
 class CellBiGan:
-    def __init__(self, encoding_size, gene_size):
+    def __init__(self, encoding_size, gene_size,
+                 discr_optimizer=optimizers.Adam(),
+                 discr_loss=losses.binary_crossentropy,
+                 gen_optimizer=optimizers.Adam(),
+                 gen_loss=losses.mse,
+                 enc_optimizer=optimizers.Adam(),
+                 enc_loss=losses.mse):
         self.encoding_size = encoding_size
         self._generator = _build_generator(encoding_size, gene_size)
         self._encoder = _build_encoder(encoding_size, gene_size)
         self._discriminator = _build_discriminator(encoding_size, gene_size)
+        self._discriminator.compile(optimizer=discr_optimizer, loss=discr_loss)
+
+        gen_output = self._discriminator((self._generator.input, self._generator.output))
+        self._generator_train_model = Model(self._generator.inputs, gen_output, name='generator-trainings-model')
+        self._generator_train_model.compile(optimizer=gen_optimizer, loss=gen_loss)
+
+        enc_output = self._discriminator((self._encoder.output, self._encoder.input))
+        self._encoder_train_model = Model(self._encoder.inputs, enc_output, name='encoder-trainings-model')
+        self._encoder_train_model.compile(optimizer=enc_optimizer, loss=enc_loss)
 
     def summary(self):
         self._generator.summary()

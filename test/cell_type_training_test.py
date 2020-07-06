@@ -53,8 +53,9 @@ class TrainingTestCase(unittest.TestCase):
 
     def test_discriminator_model(self):
         discriminator = CellBiGan(encoding_size=4, gene_size=5)._discriminator
-        self.assertEqual([(None, 4), (None, 5)], discriminator.input_shape)
-        self.assertEqual((None, 1), discriminator.output_shape)
+        self.assertTrue(discriminator._is_compiled)
+        self.assertEqual([(None, 4), (None, 5)], discriminator.get_input_shape_at(0))
+        self.assertEqual((None, 1), discriminator.get_output_shape_at(0))
         self.assertEqual(tf.nn.sigmoid, discriminator.layers[-1].activation)
 
     def test_create_random_encoding_vector(self):
@@ -64,3 +65,15 @@ class TrainingTestCase(unittest.TestCase):
             self.assertEqual(20, len(cell_encoding))
             self.assertTrue(np.all(cell_encoding > 0), f'cell_encoding with values < 0:\n{cell_encoding}')
             self.assertTrue(np.all(cell_encoding < 1), f'cell_encoding with values > 1:\n{cell_encoding}')
+
+    def test_bigan_models(self):
+        bigan = CellBiGan(encoding_size=4, gene_size=6)
+        gen_train_model = bigan._generator_train_model
+        self.assertTrue(gen_train_model._is_compiled)
+        self.assertEqual((None, 4), gen_train_model.input_shape)
+        self.assertEqual((None, 1), gen_train_model.output_shape)
+
+        enc_train_model = bigan._encoder_train_model
+        self.assertTrue(enc_train_model._is_compiled)
+        self.assertEqual((None, 6), enc_train_model.input_shape)
+        self.assertEqual((None, 1), enc_train_model.output_shape)
