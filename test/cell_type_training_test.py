@@ -4,7 +4,7 @@ import unittest
 import numpy as np
 import tensorflow as tf
 
-from cell_type_training import load_matrix, CellTraining, CellBigan
+from cell_type_training import load_matrix, CellTraining, CellBiGan
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '5'
 
@@ -40,8 +40,19 @@ class TrainingTestCase(unittest.TestCase):
         self.assertTrue(np.all(eq_matrix), f'\tExpected:\n{expected}\n\tActual:\n{actual}')
 
     def test_generator_model(self):
-        cell_bigan = CellBigan(encoding_shape=(15,), gene_count=1000)
+        cell_bigan = CellBiGan(encoding_size=15, gene_size=1000)
         generator = cell_bigan._generator
         self.assertEqual((None, 15), generator.input_shape)
         self.assertEqual((None, 1000), generator.output_shape)
         self.assertEqual(tf.nn.relu, generator.layers[-1].activation)
+
+    def test_encode_model(self):
+        cell_bigan = CellBiGan(encoding_size=12, gene_size=100)
+        encoder = cell_bigan._encoder
+        self.assertEqual((None, 100), encoder.input_shape)
+        self.assertEqual((None, 12), encoder.output_shape)
+        self.assertEqual(tf.nn.sigmoid, encoder.layers[-1].activation)
+
+    def test_create_random_encoding(self):
+        # encoding vector values between 0-1
+        pass

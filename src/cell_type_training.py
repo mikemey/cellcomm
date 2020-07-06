@@ -14,20 +14,29 @@ def load_matrix(file):
     return df.pivot_table(index='barcode', columns='gene', values='p', fill_value=0)
 
 
-def _build_generator(encoding_shape, gene_count):
-    encoding_in = layers.Input(encoding_shape)
-    x = layers.Dense(encoding_shape[0] * 10, activation=tf.nn.relu)(encoding_in)
-    data_out = layers.Dense(gene_count, activation=tf.nn.relu)(x)
-    return Model(encoding_in, data_out, name='Cell generator')
+def _build_generator(encoding_size, gene_size):
+    encoding_in = layers.Input(shape=encoding_size)
+    x = layers.Dense(encoding_size * 10, activation=tf.nn.relu)(encoding_in)
+    cell_out = layers.Dense(gene_size, activation=tf.nn.relu)(x)
+    return Model(encoding_in, cell_out, name='Cell generator')
 
 
-class CellBigan:
-    def __init__(self, encoding_shape, gene_count):
-        self._generator = _build_generator(encoding_shape, gene_count)
+def _build_encoder(encoding_size, gene_size):
+    cell_in = layers.Input(shape=gene_size)
+    x = layers.Dense(encoding_size * 10, activation=tf.nn.relu)(cell_in)
+    encoding_out = layers.Dense(encoding_size, activation=tf.nn.sigmoid)(x)
+    return Model(cell_in, encoding_out, name='Cell encoder')
+
+
+class CellBiGan:
+    def __init__(self, encoding_size, gene_size):
+        self._generator = _build_generator(encoding_size, gene_size)
+        self._encoder = _build_encoder(encoding_size, gene_size)
         self.summary()
 
     def summary(self):
         self._generator.summary()
+        self._encoder.summary()
 
 
 class CellTraining:
