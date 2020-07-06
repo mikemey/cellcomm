@@ -77,3 +77,20 @@ class TrainingTestCase(unittest.TestCase):
         self.assertTrue(enc_train_model._is_compiled)
         self.assertEqual((None, 6), enc_train_model.input_shape)
         self.assertEqual((None, 1), enc_train_model.output_shape)
+
+    def test_training_modes(self):
+        bigan = CellBiGan(encoding_size=4, gene_size=6)
+
+        def assert_trainings_mode(gen, enc, discr):
+            self.assertEqual(bigan._generator.trainable, gen)
+            self.assertEqual(bigan._encoder.trainable, enc)
+            self.assertEqual(bigan._discriminator.trainable, discr)
+
+        bigan.set_trainings_mode(CellBiGan.TRAIN_GENERATOR)
+        assert_trainings_mode(True, False, False)
+
+        bigan.set_trainings_mode(CellBiGan.TRAIN_ENCODER)
+        assert_trainings_mode(False, True, False)
+
+        bigan.set_trainings_mode(CellBiGan.TRAIN_DISCRIMINATOR)
+        assert_trainings_mode(False, False, True)

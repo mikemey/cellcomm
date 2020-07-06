@@ -38,6 +38,10 @@ def _build_discriminator(encoding_size, gene_size):
 
 
 class CellBiGan:
+    TRAIN_GENERATOR = (True, False, False)
+    TRAIN_ENCODER = (False, True, False)
+    TRAIN_DISCRIMINATOR = (False, False, True)
+
     def __init__(self, encoding_size, gene_size,
                  discr_optimizer=optimizers.Adam(),
                  discr_loss=losses.binary_crossentropy,
@@ -66,6 +70,9 @@ class CellBiGan:
 
     def _random_encoding_vector(self):
         return tf.random.uniform(shape=(self.encoding_size,), minval=0, maxval=1)
+
+    def set_trainings_mode(self, mode):
+        self._generator.trainable, self._encoder.trainable, self._discriminator.trainable = mode
 
 
 class CellTraining:
