@@ -18,14 +18,14 @@ def _build_generator(encoding_size, gene_size):
     encoding_in = layers.Input(shape=encoding_size)
     x = layers.Dense(encoding_size * 10, activation=tf.nn.relu)(encoding_in)
     cell_out = layers.Dense(gene_size, activation=tf.nn.relu)(x)
-    return Model(encoding_in, cell_out, name='Cell generator')
+    return Model(encoding_in, cell_out, name='cell_generator')
 
 
 def _build_encoder(encoding_size, gene_size):
     cell_in = layers.Input(shape=gene_size)
     x = layers.Dense(encoding_size * 10, activation=tf.nn.relu)(cell_in)
     encoding_out = layers.Dense(encoding_size, activation=tf.nn.sigmoid)(x)
-    return Model(cell_in, encoding_out, name='Cell encoder')
+    return Model(cell_in, encoding_out, name='cell_encoder')
 
 
 def _build_discriminator(encoding_size, gene_size):
@@ -34,7 +34,7 @@ def _build_discriminator(encoding_size, gene_size):
 
     x = layers.Concatenate()([encoding_in, cell_in])
     prob = layers.Dense(1, activation=tf.nn.sigmoid)(x)
-    return Model([encoding_in, cell_in], prob, name='Cell discriminator')
+    return Model([encoding_in, cell_in], prob, name='source_discriminator')
 
 
 class CellBiGan:
