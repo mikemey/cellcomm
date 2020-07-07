@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
+import src.__main__ as ct
 
-run_id = '07-07-mse-rms0002'
+run_id = ct.RUN_ID
 save_image = False
 show_plot = True
 

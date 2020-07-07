@@ -1,12 +1,11 @@
 import os
 
-from cell_type_training import CellTraining
-
 
 def data_file(data_file_):
     return os.path.join(os.path.dirname(__file__), '..', 'data', data_file_)
 
 
+RUN_ID = '07-07-TAC_4-mse-rms0002'
 MATRIX_FILES = [
     'GSE122930_TAC_1_week_repA+B_matrix.mtx',
     'GSE122930_TAC_4_weeks_repA+B_matrix.mtx',
@@ -14,7 +13,10 @@ MATRIX_FILES = [
     'GSE122930_Sham_4_weeks_repA+B_matrix.mtx'
 ]
 
-trainer = CellTraining('07-07-mse-rms0002', data_file(MATRIX_FILES[1]),
-                       batch_size=128, encoding_size=20)
-# trainer.bigan.summary()
-trainer.run(20000)
+if __name__ == '__main__':
+    from cell_type_training import CellTraining
+
+    trainer = CellTraining(RUN_ID, data_file(MATRIX_FILES[1]),
+                           batch_size=128, encoding_size=20)
+    # trainer.bigan.summary()
+    trainer.run(20000)
