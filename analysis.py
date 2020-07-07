@@ -1,13 +1,22 @@
 import matplotlib.pyplot as plt
 
-with open('logs/07-07-long-run/losses.csv') as f:
+run_id = '07-07-long-run'
+save_image = False
+show_plot = True
+
+
+def read_log_lines(log_file):
+    return log_file.readlines()[1:]
+
+
+def clean(token):
+    return float(token.strip())
+
+
+with open(f'logs/{run_id}/losses.csv') as f:
     xs = []
     all_loss_graphs = [[], [], [], []]
-    for line in f.readlines()[1:]:
-        def clean(token):
-            return float(token.strip())
-
-
+    for line in read_log_lines(f):
         tokens = map(clean, line.split(','))
         it, total_loss, g_loss, e_loss, d_loss = list(tokens)
         xs.append(it)
@@ -36,6 +45,8 @@ legend_frame = plt.legend(title='Losses', framealpha=1.0).get_frame()
 legend_frame.set_linewidth(0.4)
 
 fig.tight_layout()
-fig.savefig('test.png')
-plt.show()
+if save_image:
+    fig.savefig(f'docs/{run_id}_losses.png')
+if show_plot:
+    plt.show()
 plt.close(fig)
