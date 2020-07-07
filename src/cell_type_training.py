@@ -61,12 +61,12 @@ class CellBiGan:
     TRAIN_DISCRIMINATOR = (False, False, True)
 
     def __init__(self, encoding_size, gene_size,
-                 discr_optimizer=optimizers.Adam(),
+                 discr_optimizer=optimizers.RMSprop(),
                  discr_loss=losses.binary_crossentropy,
-                 gen_optimizer=optimizers.Adam(),
-                 gen_loss=losses.mse,
-                 enc_optimizer=optimizers.Adam(),
-                 enc_loss=losses.mse):
+                 gen_optimizer=optimizers.RMSprop(),
+                 gen_loss=losses.binary_crossentropy,
+                 enc_optimizer=optimizers.RMSprop(),
+                 enc_loss=losses.binary_crossentropy):
         self.encoding_size = encoding_size
         self._generator = _build_generator(encoding_size, gene_size)
         self._encoder = _build_encoder(encoding_size, gene_size)
@@ -125,7 +125,7 @@ class CellSinkAdapter:
     def __init__(self, run_id, write_log):
         self.write_log = write_log
         if self.write_log:
-            log_dir = os.path.join('logs', f'{int(time.time())}_{run_id}')
+            log_dir = os.path.join('logs', run_id)
             self.sink = DataSink(log_dir=log_dir)
             self.sink.add_graph_header(LOSSES_GRAPH_ID, ['iteration', 'total-loss', 'g-loss', 'e-loss', 'd-loss'])
 
