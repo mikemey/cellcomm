@@ -1,8 +1,10 @@
 import os
 import unittest
+from unittest.mock import MagicMock, call
 
 import numpy as np
 import tensorflow as tf
+from pandas import DataFrame
 
 from cell_type_training import load_matrix, CellTraining, CellBiGan
 
@@ -29,7 +31,7 @@ class TrainingTestCase(unittest.TestCase):
 
     def test_sample_cell_data(self):
         cell_training = CellTraining(TEST_TRAINING_FILE, TEST_BATCH_SIZE)
-        sampled = cell_training.sample_cell_data(0)
+        sampled = cell_training._sample_cell_data(0)
         self.assertEqual((TEST_BATCH_SIZE, TEST_GENE_COUNT), sampled.shape)
         self.__assert_data([TEST_MATRIX_CONTENT[2],
                             TEST_MATRIX_CONTENT[0],
@@ -61,8 +63,8 @@ class TrainingTestCase(unittest.TestCase):
     def test_create_random_encoding_vector(self):
         cell_bigan = CellBiGan(encoding_size=20, gene_size=1)
         for _ in range(100):
-            cell_encoding = cell_bigan._random_encoding_vector()
-            self.assertEqual(20, len(cell_encoding))
+            cell_encoding = cell_bigan._random_encoding_vector(3)
+            self.assertEqual((3, 20), cell_encoding.shape)
             self.assertTrue(np.all(cell_encoding > 0), f'cell_encoding with values < 0:\n{cell_encoding}')
             self.assertTrue(np.all(cell_encoding < 1), f'cell_encoding with values > 1:\n{cell_encoding}')
 
@@ -86,11 +88,55 @@ class TrainingTestCase(unittest.TestCase):
             self.assertEqual(bigan._encoder.trainable, enc)
             self.assertEqual(bigan._discriminator.trainable, discr)
 
-        bigan.set_trainings_mode(CellBiGan.TRAIN_GENERATOR)
+        bigan._set_trainings_mode(CellBiGan.TRAIN_GENERATOR)
         assert_trainings_mode(True, False, False)
 
-        bigan.set_trainings_mode(CellBiGan.TRAIN_ENCODER)
+        bigan._set_trainings_mode(CellBiGan.TRAIN_ENCODER)
         assert_trainings_mode(False, True, False)
 
-        bigan.set_trainings_mode(CellBiGan.TRAIN_DISCRIMINATOR)
+        bigan._set_trainings_mode(CellBiGan.TRAIN_DISCRIMINATOR)
         assert_trainings_mode(False, False, True)
+
+    def test_training_step(self):
+        rnd_encodings = tf.constant([[0.123] * TEST_BATCH_SIZE])
+        sampled_batch = DataFrame([[14, 15]] * TEST_BATCH_SIZE)
+
+        bigan = CellBiGan(encoding_size=1, gene_size=2)
+        bigan._set_trainings_mode = trainings_mode_mock = MagicMock()
+        bigan._random_encoding_vector = random_enc_mock = MagicMock(return_value=rnd_encodings)
+        bigan._generator_train_model.train_on_batch = gen_train_mock = MagicMock(return_value='g-loss')
+        bigan._encoder_train_model.train_on_batch = enc_train_mock = MagicMock(return_value='e-loss')
+
+        gen_prediction = tf.constant([[10, 11]] * TEST_BATCH_SIZE)
+        enc_prediction = tf.constant([[2]] * TEST_BATCH_SIZE)
+        bigan._generator.predict = gen_predict_mock = MagicMock(return_value=gen_prediction)
+        bigan._encoder.predict = enc_predict_mock = MagicMock(return_value=enc_prediction)
+        bigan._discriminator.train_on_batch = discr_train_mock = MagicMock(side_effect=[3, 5])
+
+        losses = bigan.trainings_step(sampled_batch)
+        self.assertEqual(('g-loss', 'e-loss', 4), losses)
+
+        trainings_mode_mock.assert_has_calls([
+            call(CellBiGan.TRAIN_GENERATOR),
+            call(CellBiGan.TRAIN_ENCODER),
+            call(CellBiGan.TRAIN_DISCRIMINATOR)]
+        )
+        random_enc_mock.assert_called_once_with(TEST_BATCH_SIZE)
+
+        def assert_mock_calls(mock, args):
+            for ix, m_arg in enumerate(args):
+                self.__assert_data(m_arg, mock.call_args[0][ix])
+
+        y_ones, y_zeros = tf.ones(TEST_BATCH_SIZE), tf.zeros(TEST_BATCH_SIZE)
+        assert_mock_calls(gen_train_mock, args=(rnd_encodings, y_ones))
+        assert_mock_calls(enc_train_mock, args=(sampled_batch, y_zeros))
+        assert_mock_calls(gen_predict_mock, args=(rnd_encodings,))
+        assert_mock_calls(enc_predict_mock, args=(sampled_batch,))
+
+        self.__assert_data(rnd_encodings, discr_train_mock.call_args_list[0][0][0][0])
+        self.__assert_data(gen_prediction, discr_train_mock.call_args_list[0][0][0][1])
+        self.__assert_data(y_zeros, discr_train_mock.call_args_list[0][0][1])
+
+        self.__assert_data(enc_prediction, discr_train_mock.call_args_list[1][0][0][0])
+        self.__assert_data(sampled_batch, discr_train_mock.call_args_list[1][0][0][1])
+        self.__assert_data(y_ones, discr_train_mock.call_args_list[1][0][1])

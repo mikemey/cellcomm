@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import pandas as pd
 import tensorflow as tf
 from tensorflow.keras import Model, layers, optimizers, losses
@@ -68,17 +69,42 @@ class CellBiGan:
         self._encoder.summary()
         self._discriminator.summary()
 
-    def _random_encoding_vector(self):
-        return tf.random.uniform(shape=(self.encoding_size,), minval=0, maxval=1)
+    def _random_encoding_vector(self, v_count):
+        return tf.random.uniform(shape=(v_count, self.encoding_size), minval=0, maxval=1)
 
-    def set_trainings_mode(self, mode):
+    def _set_trainings_mode(self, mode):
         self._generator.trainable, self._encoder.trainable, self._discriminator.trainable = mode
+
+    def trainings_step(self, sampled_batch):
+        z = self._random_encoding_vector(len(sampled_batch))
+        y_ones = tf.ones(len(sampled_batch))
+        y_zeros = tf.zeros(len(sampled_batch))
+
+        g_loss = self.__train_generator(z, y_ones)
+        e_loss = self.__train_encoder(sampled_batch, y_zeros)
+
+        d_loss_1 = self.__train_discriminator(z, self._generator.predict(z), y_zeros)
+        d_loss_2 = self.__train_discriminator(self._encoder.predict(sampled_batch), sampled_batch, y_ones)
+        d_loss = np.mean([d_loss_1, d_loss_2])
+        return g_loss, e_loss, d_loss
+
+    def __train_generator(self, encoding, target):
+        self._set_trainings_mode(self.TRAIN_GENERATOR)
+        return self._generator_train_model.train_on_batch(encoding, target)
+
+    def __train_encoder(self, cell_data, target):
+        self._set_trainings_mode(self.TRAIN_ENCODER)
+        return self._encoder_train_model.train_on_batch(cell_data, target)
+
+    def __train_discriminator(self, encoding, cell_data, target):
+        self._set_trainings_mode(self.TRAIN_DISCRIMINATOR)
+        return self._discriminator.train_on_batch((encoding, cell_data), target)
 
 
 class CellTraining:
-    def __init__(self, matrix_file=CELL_MATRIX_FILE, batch_size=32):
+    def __init__(self, matrix_file=CELL_MATRIX_FILE, batch_size=64):
         self.batch_size = batch_size
         self.data = load_matrix(matrix_file)
 
-    def sample_cell_data(self, random_seed=None):
+    def _sample_cell_data(self, random_seed=None):
         return self.data.sample(self.batch_size, random_state=random_seed)
