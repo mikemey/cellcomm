@@ -11,7 +11,11 @@ from support.data_sink import DataSink
 def load_matrix(file):
     df = pd.read_csv(file, header=None, skiprows=3,
                      delim_whitespace=True, names=['gene', 'barcode', 'p'])
-    return df.pivot_table(index='barcode', columns='gene', values='p', fill_value=0)
+    df = df.pivot_table(index='barcode', columns='gene', values='p', fill_value=0)
+    print(f'============ Loaded {file}')
+    print(f'============ barcodes: {df.shape[0]}, genes: {df.shape[1]}')
+    print('=' * 80)
+    return df
 
 
 def _build_generator(encoding_size, gene_size):
