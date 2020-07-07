@@ -3,7 +3,6 @@ import os
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-import time
 from tensorflow.keras import Model, layers, optimizers, losses
 
 from support.data_sink import DataSink
