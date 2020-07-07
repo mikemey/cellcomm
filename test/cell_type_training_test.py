@@ -13,6 +13,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '5'
 TEST_TRAINING_FILE = os.path.join(os.path.dirname(__file__), 'example_matrix.mtx')
 TEST_BATCH_SIZE = 3
 TEST_GENE_COUNT = 11
+TEST_ENCODING_SIZE = 8
 TEST_MATRIX_CONTENT = [
     # gene: 32, 34, 39, 40, 60, 63, 23764, 27918, 27919, 27921, 27994
     [0, 0, 0, 0, 1, 11, 0, 0, 0, 6, 1],
@@ -31,7 +32,7 @@ class TFTestCase(unittest.TestCase):
 
 class CellTrainingTestCase(TFTestCase):
     def setUp(self):
-        self.trainer = CellTraining(TEST_TRAINING_FILE, TEST_BATCH_SIZE)
+        self.trainer = CellTraining(TEST_TRAINING_FILE, TEST_BATCH_SIZE, TEST_ENCODING_SIZE)
 
     def test_load_matrix_and_pivot(self):
         cell_batch = load_matrix(TEST_TRAINING_FILE)
@@ -44,6 +45,23 @@ class CellTrainingTestCase(TFTestCase):
         self.assertDeepEqual([TEST_MATRIX_CONTENT[2],
                               TEST_MATRIX_CONTENT[0],
                               TEST_MATRIX_CONTENT[1]], sampled)
+
+    def test_bigan_setup(self):
+        bigan = self.trainer.bigan
+        self.assertEqual(TEST_ENCODING_SIZE, bigan.encoding_size)
+        self.assertEqual((None, TEST_ENCODING_SIZE), bigan._generator.input_shape)
+        self.assertEqual((None, TEST_GENE_COUNT), bigan._generator.output_shape)
+
+    def test_trainings_run(self):
+        test_data = ['some', 'data']
+        self.trainer._sample_cell_data = sample_mock = MagicMock(return_value=test_data)
+        self.trainer.bigan.trainings_step = trainings_step_mock = MagicMock(return_value=(3, 2, 1))
+
+        test_iterations = 6
+        self.trainer.run(test_iterations)
+        self.assertEqual(sample_mock.call_count, test_iterations)
+        trainings_step_mock.assert_called_with(test_data)
+        self.assertEqual(trainings_step_mock.call_count, test_iterations)
 
 
 class CellBiGanTestCase(TFTestCase):

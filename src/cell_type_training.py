@@ -102,9 +102,17 @@ class CellBiGan:
 
 
 class CellTraining:
-    def __init__(self, matrix_file=CELL_MATRIX_FILE, batch_size=64):
+    def __init__(self, matrix_file, batch_size, encoding_size):
         self.batch_size = batch_size
         self.data = load_matrix(matrix_file)
+        self.bigan = CellBiGan(encoding_size, gene_size=self.data.shape[1])
 
     def _sample_cell_data(self, random_seed=None):
         return self.data.sample(self.batch_size, random_state=random_seed)
+
+    def run(self, iterations):
+        for it in range(iterations):
+            batch = self._sample_cell_data()
+            all_losses = g_loss, e_loss, d_loss = self.bigan.trainings_step(batch)
+            total_loss = sum(all_losses)
+            print(f'it:{it:7}  TOT: {total_loss:6.3f}  G-L: {g_loss:6.3f}  E-L: {e_loss:6.3f}  D-L: {d_loss:6.3f}')
