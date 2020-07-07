@@ -149,11 +149,10 @@ class CellTraining:
         return self.data.sample(self.batch_size, random_state=random_seed)
 
     def run(self, iterations):
-        for i in range(iterations):
-            iteration = i + 1
+        for it in range(iterations):
             batch = self._sample_cell_data()
             all_losses = g_loss, e_loss, d_loss = self.bigan.trainings_step(batch)
             total_loss = sum(all_losses)
-            self.sink.add_losses(iteration, total_loss, g_loss, e_loss, d_loss)
-            print(f'it:{iteration:7}  TOT: {total_loss:6.3f}  G-L: {g_loss:6.3f}  E-L: {e_loss:6.3f}  D-L: {d_loss:6.3f}')
+            self.sink.add_losses(it, total_loss, g_loss, e_loss, d_loss)
+            print(f'it:{it:7}  TOT: {total_loss:6.3f}  G-L: {g_loss:6.3f}  E-L: {e_loss:6.3f}  D-L: {d_loss:6.3f}')
         self.sink.drain_data()

@@ -66,7 +66,7 @@ class CellTrainingTestCase(TFTestCase):
         self.assertEqual(trainings_step_mock.call_count, test_iterations)
 
         self.assertEqual(self.sink_mock.add_losses.call_count, test_iterations)
-        self.sink_mock.add_losses.assert_called_with(test_iterations, 2.3, *test_losses)
+        self.sink_mock.add_losses.assert_called_with(5, 2.3, *test_losses)
         self.assertEqual(self.sink_mock.drain_data.call_count, 1)
 
 
