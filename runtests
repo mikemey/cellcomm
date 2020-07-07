@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
 
 export PYTHONPATH=src
-python3 -m pytest -p no:warnings -s "$*"
+if [[ "$1" != "-s" ]]; then
+  echo -e "${FG_YELLOW}output suppressed (enable with -s)"
+fi
+python3 -m pytest -p no:warnings "$@"
