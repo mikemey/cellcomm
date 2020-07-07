@@ -12,14 +12,28 @@ def load_matrix(file):
 
 def _build_generator(encoding_size, gene_size):
     encoding_in = layers.Input(shape=encoding_size)
-    x = layers.Dense(encoding_size * 10, activation=tf.nn.relu)(encoding_in)
+    x = layers.Dense(50, activation=tf.nn.relu)(encoding_in)
+    x = layers.Concatenate()([x, encoding_in])
+    x = layers.Dense(256, activation=tf.nn.relu)(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Concatenate()([x, encoding_in])
+    x = layers.Dense(256, activation=tf.nn.relu)(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Dense(1024, activation=tf.nn.relu)(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Concatenate()([x, encoding_in])
     cell_out = layers.Dense(gene_size, activation=tf.nn.relu)(x)
     return Model(encoding_in, cell_out, name='cell_generator')
 
 
 def _build_encoder(encoding_size, gene_size):
     cell_in = layers.Input(shape=gene_size)
-    x = layers.Dense(encoding_size * 10, activation=tf.nn.relu)(cell_in)
+    normal_cell_in = layers.BatchNormalization()(cell_in)
+    x = layers.Dense(832, activation=tf.nn.relu)(normal_cell_in)
+    x = layers.Concatenate()([x, normal_cell_in])
+    x = layers.Dense(300, activation=tf.nn.relu)(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Concatenate()([x, normal_cell_in])
     encoding_out = layers.Dense(encoding_size, activation=tf.nn.sigmoid)(x)
     return Model(cell_in, encoding_out, name='cell_encoder')
 
@@ -29,6 +43,9 @@ def _build_discriminator(encoding_size, gene_size):
     cell_in = layers.Input(shape=gene_size, name='cell_input')
 
     x = layers.Concatenate()([encoding_in, cell_in])
+    x = layers.BatchNormalization()(x)
+    x = layers.Dense(300, activation=tf.nn.sigmoid)(x)
+    x = layers.Dense(300, activation=tf.nn.sigmoid)(x)
     prob = layers.Dense(1, activation=tf.nn.sigmoid)(x)
     return Model([encoding_in, cell_in], prob, name='cell_discriminator')
 

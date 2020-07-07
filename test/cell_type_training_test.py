@@ -71,7 +71,7 @@ class CellBiGanTestCase(TFTestCase):
         self.assertEqual((None, 1000), generator.output_shape)
         self.assertEqual(tf.nn.relu, generator.layers[-1].activation)
 
-    def test_encode_model(self):
+    def test_encoder_model(self):
         encoder = CellBiGan(encoding_size=12, gene_size=100)._encoder
         self.assertEqual((None, 100), encoder.input_shape)
         self.assertEqual((None, 12), encoder.output_shape)
