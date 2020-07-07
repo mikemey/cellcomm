@@ -1,12 +1,7 @@
-import os
-
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 from tensorflow.keras import Model, layers, optimizers, losses
-
-CELL_MATRIX_FILE = os.path.join(os.path.dirname(__file__),
-                                '..', 'data', 'GSE122930_Sham_1_week_matrix.mtx')
 
 
 def load_matrix(file):
@@ -35,7 +30,7 @@ def _build_discriminator(encoding_size, gene_size):
 
     x = layers.Concatenate()([encoding_in, cell_in])
     prob = layers.Dense(1, activation=tf.nn.sigmoid)(x)
-    return Model([encoding_in, cell_in], prob, name='source_discriminator')
+    return Model([encoding_in, cell_in], prob, name='cell_discriminator')
 
 
 class CellBiGan:
