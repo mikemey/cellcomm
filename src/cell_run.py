@@ -14,6 +14,7 @@ MATRIX_FILES = [
     'GSE122930_Sham_4_weeks_repA+B_matrix.mtx',
 ]
 
-trainer = CellTraining(data_file(MATRIX_FILES[0]), 64, 20)
+trainer = CellTraining('long-run', data_file(MATRIX_FILES[0]),
+                       batch_size=128, encoding_size=20)
 # trainer.bigan.summary()
-trainer.run(2000)
+trainer.run(20000)

@@ -32,7 +32,9 @@ class TFTestCase(unittest.TestCase):
 
 class CellTrainingTestCase(TFTestCase):
     def setUp(self):
-        self.trainer = CellTraining(TEST_TRAINING_FILE, TEST_BATCH_SIZE, TEST_ENCODING_SIZE)
+        self.trainer = CellTraining('test-run', TEST_TRAINING_FILE, TEST_BATCH_SIZE,
+                                    TEST_ENCODING_SIZE, write_log=False)
+        self.trainer.sink = self.sink_mock = MagicMock()
 
     def test_load_matrix_and_pivot(self):
         cell_batch = load_matrix(TEST_TRAINING_FILE)
@@ -53,15 +55,19 @@ class CellTrainingTestCase(TFTestCase):
         self.assertEqual((None, TEST_GENE_COUNT), bigan._generator.output_shape)
 
     def test_trainings_run(self):
-        test_data = ['some', 'data']
+        test_data, test_losses = ['some', 'data'], (0.7, 0.8, 0.8)
         self.trainer._sample_cell_data = sample_mock = MagicMock(return_value=test_data)
-        self.trainer.bigan.trainings_step = trainings_step_mock = MagicMock(return_value=(3, 2, 1))
+        self.trainer.bigan.trainings_step = trainings_step_mock = MagicMock(return_value=test_losses)
 
         test_iterations = 6
         self.trainer.run(test_iterations)
         self.assertEqual(sample_mock.call_count, test_iterations)
         trainings_step_mock.assert_called_with(test_data)
         self.assertEqual(trainings_step_mock.call_count, test_iterations)
+
+        self.assertEqual(self.sink_mock.add_losses.call_count, test_iterations)
+        self.sink_mock.add_losses.assert_called_with(test_iterations, 2.3, *test_losses)
+        self.assertEqual(self.sink_mock.drain_data.call_count, 1)
 
 
 class CellBiGanTestCase(TFTestCase):

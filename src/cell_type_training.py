@@ -1,7 +1,12 @@
+import os
+
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+import time
 from tensorflow.keras import Model, layers, optimizers, losses
+
+from support.data_sink import DataSink
 
 
 def load_matrix(file):
@@ -113,18 +118,42 @@ class CellBiGan:
         return self._discriminator.train_on_batch((encoding, cell_data), target)
 
 
+LOSSES_GRAPH_ID = 'losses'
+
+
+class CellSinkAdapter:
+    def __init__(self, run_id, write_log):
+        self.write_log = write_log
+        if self.write_log:
+            log_dir = os.path.join('logs', f'{int(time.time())}_{run_id}')
+            self.sink = DataSink(log_dir=log_dir)
+            self.sink.add_graph_header(LOSSES_GRAPH_ID, ['iteration', 'total-loss', 'g-loss', 'e-loss', 'd-loss'])
+
+    def add_losses(self, *data):
+        if self.write_log:
+            self.sink.add_data(LOSSES_GRAPH_ID, list(data))
+
+    def drain_data(self):
+        if self.write_log:
+            self.sink.drain_data()
+
+
 class CellTraining:
-    def __init__(self, matrix_file, batch_size, encoding_size):
+    def __init__(self, run_id, matrix_file, batch_size, encoding_size, write_log=True):
         self.batch_size = batch_size
         self.data = load_matrix(matrix_file)
         self.bigan = CellBiGan(encoding_size, gene_size=self.data.shape[1])
+        self.sink = CellSinkAdapter(run_id, write_log)
 
     def _sample_cell_data(self, random_seed=None):
         return self.data.sample(self.batch_size, random_state=random_seed)
 
     def run(self, iterations):
-        for it in range(iterations):
+        for i in range(iterations):
+            iteration = i + 1
             batch = self._sample_cell_data()
             all_losses = g_loss, e_loss, d_loss = self.bigan.trainings_step(batch)
             total_loss = sum(all_losses)
-            print(f'it:{it:7}  TOT: {total_loss:6.3f}  G-L: {g_loss:6.3f}  E-L: {e_loss:6.3f}  D-L: {d_loss:6.3f}')
+            self.sink.add_losses(iteration, total_loss, g_loss, e_loss, d_loss)
+            print(f'it:{iteration:7}  TOT: {total_loss:6.3f}  G-L: {g_loss:6.3f}  E-L: {e_loss:6.3f}  D-L: {d_loss:6.3f}')
+        self.sink.drain_data()
