@@ -23,24 +23,30 @@ TEST_MATRIX_CONTENT = [
 ]
 
 
-class TrainingTestCase(unittest.TestCase):
-    def test_load_matrix_and_pivot(self):
-        cell_batch = load_matrix(TEST_TRAINING_FILE)
-        self.assertEqual((5, TEST_GENE_COUNT), cell_batch.shape)
-        self.__assert_data(TEST_MATRIX_CONTENT, cell_batch)
-
-    def test_sample_cell_data(self):
-        cell_training = CellTraining(TEST_TRAINING_FILE, TEST_BATCH_SIZE)
-        sampled = cell_training._sample_cell_data(0)
-        self.assertEqual((TEST_BATCH_SIZE, TEST_GENE_COUNT), sampled.shape)
-        self.__assert_data([TEST_MATRIX_CONTENT[2],
-                            TEST_MATRIX_CONTENT[0],
-                            TEST_MATRIX_CONTENT[1]], sampled)
-
-    def __assert_data(self, expected, actual):
+class TFTestCase(unittest.TestCase):
+    def assertDeepEqual(self, expected, actual):
         eq_matrix = tf.math.equal(expected, actual)
         self.assertTrue(np.all(eq_matrix), f'\tExpected:\n{expected}\n\tActual:\n{actual}')
 
+
+class CellTrainingTestCase(TFTestCase):
+    def setUp(self):
+        self.trainer = CellTraining(TEST_TRAINING_FILE, TEST_BATCH_SIZE)
+
+    def test_load_matrix_and_pivot(self):
+        cell_batch = load_matrix(TEST_TRAINING_FILE)
+        self.assertEqual((5, TEST_GENE_COUNT), cell_batch.shape)
+        self.assertDeepEqual(TEST_MATRIX_CONTENT, cell_batch)
+
+    def test_sample_cell_data(self):
+        sampled = self.trainer._sample_cell_data(0)
+        self.assertEqual((TEST_BATCH_SIZE, TEST_GENE_COUNT), sampled.shape)
+        self.assertDeepEqual([TEST_MATRIX_CONTENT[2],
+                              TEST_MATRIX_CONTENT[0],
+                              TEST_MATRIX_CONTENT[1]], sampled)
+
+
+class CellBiGanTestCase(TFTestCase):
     def test_generator_model(self):
         generator = CellBiGan(encoding_size=15, gene_size=1000)._generator
         self.assertEqual((None, 15), generator.input_shape)
@@ -125,7 +131,7 @@ class TrainingTestCase(unittest.TestCase):
 
         def assert_mock_calls(mock, args):
             for ix, m_arg in enumerate(args):
-                self.__assert_data(m_arg, mock.call_args[0][ix])
+                self.assertDeepEqual(m_arg, mock.call_args[0][ix])
 
         y_ones, y_zeros = tf.ones(TEST_BATCH_SIZE), tf.zeros(TEST_BATCH_SIZE)
         assert_mock_calls(gen_train_mock, args=(rnd_encodings, y_ones))
@@ -133,10 +139,10 @@ class TrainingTestCase(unittest.TestCase):
         assert_mock_calls(gen_predict_mock, args=(rnd_encodings,))
         assert_mock_calls(enc_predict_mock, args=(sampled_batch,))
 
-        self.__assert_data(rnd_encodings, discr_train_mock.call_args_list[0][0][0][0])
-        self.__assert_data(gen_prediction, discr_train_mock.call_args_list[0][0][0][1])
-        self.__assert_data(y_zeros, discr_train_mock.call_args_list[0][0][1])
+        self.assertDeepEqual(rnd_encodings, discr_train_mock.call_args_list[0][0][0][0])
+        self.assertDeepEqual(gen_prediction, discr_train_mock.call_args_list[0][0][0][1])
+        self.assertDeepEqual(y_zeros, discr_train_mock.call_args_list[0][0][1])
 
-        self.__assert_data(enc_prediction, discr_train_mock.call_args_list[1][0][0][0])
-        self.__assert_data(sampled_batch, discr_train_mock.call_args_list[1][0][0][1])
-        self.__assert_data(y_ones, discr_train_mock.call_args_list[1][0][1])
+        self.assertDeepEqual(enc_prediction, discr_train_mock.call_args_list[1][0][0][0])
+        self.assertDeepEqual(sampled_batch, discr_train_mock.call_args_list[1][0][0][1])
+        self.assertDeepEqual(y_ones, discr_train_mock.call_args_list[1][0][1])
