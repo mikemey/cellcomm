@@ -57,12 +57,12 @@ class CellBiGan:
     TRAIN_DISCRIMINATOR = (False, False, True)
 
     def __init__(self, encoding_size, gene_size,
-                 discr_optimizer=optimizers.RMSprop(),
-                 discr_loss=losses.binary_crossentropy,
-                 gen_optimizer=optimizers.RMSprop(),
-                 gen_loss=losses.binary_crossentropy,
-                 enc_optimizer=optimizers.RMSprop(),
-                 enc_loss=losses.binary_crossentropy):
+                 discr_optimizer=optimizers.RMSprop(learning_rate=0.0002, momentum=0.1),
+                 discr_loss=losses.mean_squared_error,
+                 gen_optimizer=optimizers.RMSprop(learning_rate=0.0002, momentum=0.1),
+                 gen_loss=losses.mean_squared_error,
+                 enc_optimizer=optimizers.RMSprop(learning_rate=0.0002, momentum=0.1),
+                 enc_loss=losses.mean_squared_error):
         self.encoding_size = encoding_size
         self._generator = _build_generator(encoding_size, gene_size)
         self._encoder = _build_encoder(encoding_size, gene_size)

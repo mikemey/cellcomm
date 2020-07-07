@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-run_id = '07-07-long-run'
+run_id = '07-07-mse-rms0002'
 save_image = False
 show_plot = True
 
