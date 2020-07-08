@@ -72,7 +72,7 @@ def cluster(trainer_, show_plot=False, save_plot=True):
         if (show_plot or save_plot) and it > 50 and (count % 20) == 0:
             fig = create_plot()
             if save_plot:
-                fig.savefig(f'{LOG_DIR}/t-sne-cluster-{str(it).zfill(4)}.png')
+                fig.savefig(f'{LOG_DIR}/{RUN_ID}_t-sne_{str(it).zfill(4)}.png')
             if show_plot:
                 plt.show()
             plt.close(fig)
