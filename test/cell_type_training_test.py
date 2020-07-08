@@ -39,7 +39,7 @@ class CellTrainingTestCase(TFTestCase):
                               TEST_MATRIX_CONTENT[1]], sampled)
 
     def test_bigan_setup(self):
-        bigan = self.trainer.bigan
+        bigan = self.trainer.network
         self.assertEqual(TEST_ENCODING_SIZE, bigan.encoding_size)
         self.assertEqual((None, TEST_ENCODING_SIZE), bigan._generator.input_shape)
         self.assertEqual((None, TEST_GENE_COUNT), bigan._generator.output_shape)
@@ -47,10 +47,10 @@ class CellTrainingTestCase(TFTestCase):
     def test_trainings_run(self):
         test_data, test_losses = ['some', 'data'], (0.7, 0.8, 0.8)
         self.trainer._sample_cell_data = sample_mock = MagicMock(return_value=test_data)
-        self.trainer.bigan.trainings_step = trainings_step_mock = MagicMock(return_value=test_losses)
+        self.trainer.network.trainings_step = trainings_step_mock = MagicMock(return_value=test_losses)
 
         test_iterations = 6
-        self.trainer.run(test_iterations)
+        self.trainer.run(test_iterations, None)
         self.assertEqual(sample_mock.call_count, test_iterations)
         trainings_step_mock.assert_called_with(test_data)
         self.assertEqual(trainings_step_mock.call_count, test_iterations)
@@ -58,3 +58,11 @@ class CellTrainingTestCase(TFTestCase):
         self.assertEqual(self.sink_mock.add_losses.call_count, test_iterations)
         self.sink_mock.add_losses.assert_called_with(5, 2.3, *test_losses)
         self.assertEqual(self.sink_mock.drain_data.call_count, 1)
+
+    def test_training_runs_interceptor(self):
+        intercept_mock = MagicMock()
+        train_step_result = 1, 2, 3
+        self.trainer.network.trainings_step = MagicMock(return_value=train_step_result)
+        self.trainer.run(3, intercept_mock)
+
+        intercept_mock.assert_called_with(2, train_step_result)
