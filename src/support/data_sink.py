@@ -1,4 +1,3 @@
-import pathlib
 from typing import Any, Iterable
 
 DEFAULT_LOG_DIR = 'logs'
@@ -19,10 +18,6 @@ class DataSink:
         self.__log_dir = log_dir
         self.__graphs = {}
         self.__batch_size = batch_size
-        log_path = pathlib.Path(self.__log_dir)
-        if log_path.exists():
-            raise AssertionError(f'duplicate run-id, log-dir: {self.__log_dir}')
-        log_path.mkdir(parents=True, exist_ok=True)
 
     def add_graph_header(self, graph_id, fields: Iterable[Any]):
         if graph_id in self.__graphs.keys():
