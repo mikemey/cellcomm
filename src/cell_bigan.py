@@ -88,6 +88,9 @@ class CellBiGan:
     def _set_trainings_mode(self, mode):
         self._generator.trainable, self._encoder.trainable, self._discriminator.trainable = mode
 
+    def predict_encoding(self, cell_data):
+        return self._encoder.predict(cell_data)
+
     def trainings_step(self, sampled_batch):
         batch_size = len(sampled_batch)
         z = self._random_encoding_vector(batch_size)

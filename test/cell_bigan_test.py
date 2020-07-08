@@ -124,3 +124,11 @@ class CellBiGanTestCase(TFTestCase):
         self.assertDeepEqual(enc_prediction, discr_train_mock.call_args_list[1][0][0][0])
         self.assertDeepEqual(sampled_batch, discr_train_mock.call_args_list[1][0][0][1])
         self.assertDeepEqual(y_gen, discr_train_mock.call_args_list[1][0][1])
+
+    def test_predict_encoding(self):
+        bigan = CellBiGan(encoding_size=1, gene_size=1)
+        test_input, test_return = 'input', 'return'
+        bigan._encoder.predict = predict_mock = MagicMock(return_value=test_return)
+
+        self.assertEqual(test_return, bigan.predict_encoding(test_input))
+        predict_mock.assert_called_with(test_input)
