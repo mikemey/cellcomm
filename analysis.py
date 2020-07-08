@@ -40,7 +40,7 @@ plt.plot(xs, all_loss_graphs[2], '-g', label='encoder')
 plt.plot(xs, all_loss_graphs[3], '-r', label='discriminator')
 
 plt.grid(True, linewidth=0.2)
-plt.xlim(xmin=0, xmax=max(xs) + 1)
+plt.xlim(xmin=min(xs), xmax=max(xs) + 1)
 plt.ylim(ymin=0)
 legend_frame = plt.legend(title='Losses', framealpha=1.0).get_frame()
 legend_frame.set_linewidth(0.4)
