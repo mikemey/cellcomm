@@ -11,7 +11,7 @@ def data_file(data_file_):
 
 
 RUN_ID = 'delme'
-# RUN_ID = '07-08-1720-TAC_4-mse-adam'
+# RUN_ID = '07-08-1726-TAC_4-mse-adam'
 LOG_DIR = os.path.join('logs', RUN_ID)
 MATRIX_FILES = [
     'GSE122930_TAC_1_week_repA+B_matrix.mtx',
@@ -51,19 +51,20 @@ def log_losses():
 
 def cluster(trainer_, show_plot=False, save_plot=True):
     def create_plot():
-        print('calculate all encodings... ', end='')
+        print('calculate all encodings... ', end='', flush=True)
         all_encodings = trainer_.network.predict_encoding(trainer_.data)
         print('done')
 
-        print('calculate t-SNE... ', end='')
+        print('calculate t-SNE... ', end='', flush=True)
         points = TSNE(n_components=3).fit_transform(all_encodings)
         print('done')
 
-        print('plotting points... ', end='')
+        print('plotting points... ', end='', flush=True)
         fig = plt.figure(figsize=(12, 8))
         plt.grid(True, linewidth=0.2)
         plt.scatter(points[:, 0], points[:, 1], c=points[:, 2])
         fig.tight_layout()
+        print('done')
         return fig
 
     def intercept(it, _):
