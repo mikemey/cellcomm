@@ -22,9 +22,7 @@ TEST_MATRIX_CONTENT = [
 
 class CellTrainingTestCase(TFTestCase):
     def setUp(self):
-        self.trainer = CellTraining('test-run', TEST_TRAINING_FILE, TEST_BATCH_SIZE,
-                                    TEST_ENCODING_SIZE, write_log=False)
-        self.trainer.sink = self.sink_mock = MagicMock()
+        self.trainer = CellTraining(TEST_TRAINING_FILE, TEST_BATCH_SIZE, TEST_ENCODING_SIZE)
 
     def test_load_matrix_and_pivot(self):
         cell_batch = load_matrix(TEST_TRAINING_FILE)
@@ -54,10 +52,6 @@ class CellTrainingTestCase(TFTestCase):
         self.assertEqual(sample_mock.call_count, test_iterations)
         trainings_step_mock.assert_called_with(test_data)
         self.assertEqual(trainings_step_mock.call_count, test_iterations)
-
-        self.assertEqual(self.sink_mock.add_losses.call_count, test_iterations)
-        self.sink_mock.add_losses.assert_called_with(5, 2.3, *test_losses)
-        self.assertEqual(self.sink_mock.drain_data.call_count, 1)
 
     def test_training_runs_interceptor(self):
         intercept_mock = MagicMock()
