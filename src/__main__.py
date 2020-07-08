@@ -3,7 +3,9 @@ import pathlib
 
 import atexit
 import matplotlib.pyplot as plt
-from sklearn.manifold import TSNE
+import numpy as np
+import sklearn.manifold as skm
+from mpl_toolkits.mplot3d import Axes3D
 
 
 def data_file(data_file_):
@@ -11,7 +13,7 @@ def data_file(data_file_):
 
 
 RUN_ID = 'delme'
-# RUN_ID = '07-08-1940-TAC_4-mse-adam-3D'
+# RUN_ID = '07-08-2155-TAC_4-mse-adam-multi'
 LOG_DIR = os.path.join('logs', RUN_ID)
 MATRIX_FILES = [
     'GSE122930_TAC_1_week_repA+B_matrix.mtx',
@@ -49,33 +51,31 @@ def log_losses():
     return add_losses
 
 
-def cluster(trainer_, show_plot=False, save_plot=True):
+def cluster(trainer_, reduction_algo, show_plot=False, save_plot=True):
+    algo_name = type(reduction_algo).__name__.lower()
+    plt.rc('lines', markersize=1)
+
     def create_plot():
-        print('calculate all encodings... ', end='', flush=True)
+        print(f'|-- calc {algo_name.upper()}... ', end='', flush=True)
         all_encodings = trainer_.network.predict_encoding(trainer_.data)
-        print('done')
+        points = reduction_algo.fit_transform(all_encodings)
 
-        print('calculate t-SNE... ', end='', flush=True)
-        # points = TSNE(n_components=2).fit_transform(all_encodings)
-        points = TSNE(n_components=3).fit_transform(all_encodings)
-        print('done')
-
-        print('plotting points... ', end='', flush=True)
-        plt.rc('lines', markersize=1)
         fig = plt.figure(figsize=(12, 8))
         plt.grid(True, linewidth=0.2)
-        # plt.scatter(points[:, 0], points[:, 1])
-        plt.scatter(points[:, 0], points[:, 1], c=points[:, 2])
-        fig.tight_layout()
-        print('done')
+
+        if np.shape(points)[1] == 3:
+            plt.scatter(points[:, 0], points[:, 1], c=points[:, 2])
+            fig.tight_layout()
+        if np.shape(points)[1] == 4:
+            ax = Axes3D(fig)
+            ax.scatter(points[:, 0], points[:, 1], points[:, 2], c=points[:, 3])
         return fig
 
     def intercept(it, _):
-        count = it + 1
-        if (show_plot or save_plot) and it > 50 and (count % 20) == 0:
+        if show_plot or save_plot:
             fig = create_plot()
             if save_plot:
-                fig.savefig(f'{LOG_DIR}/{RUN_ID}_t-sne_{str(it).zfill(4)}.png')
+                fig.savefig(f'{LOG_DIR}/{RUN_ID}_{algo_name}_{str(it).zfill(4)}.png')
             if show_plot:
                 plt.show()
             plt.close(fig)
@@ -99,5 +99,8 @@ if __name__ == '__main__':
     trainer.run(9001, interceptor=combined_interceptor([
         print_losses,
         log_losses(),
-        cluster(trainer)
+        cluster(trainer, reduction_algo=skm.Isomap(n_components=4, n_jobs=-1)),
+        cluster(trainer, reduction_algo=skm.TSNE(n_components=3, n_jobs=-1, random_state=0)),
+        cluster(trainer, reduction_algo=skm.LocallyLinearEmbedding(n_neighbors=10, n_components=3, n_jobs=-1, random_state=0)),
+        lambda _, __: print()
     ]))
