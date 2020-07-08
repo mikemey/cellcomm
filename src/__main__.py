@@ -11,7 +11,7 @@ def data_file(data_file_):
 
 
 RUN_ID = 'delme'
-# RUN_ID = '07-08-1726-TAC_4-mse-adam'
+# RUN_ID = '07-08-1940-TAC_4-mse-adam-3D'
 LOG_DIR = os.path.join('logs', RUN_ID)
 MATRIX_FILES = [
     'GSE122930_TAC_1_week_repA+B_matrix.mtx',
@@ -56,12 +56,15 @@ def cluster(trainer_, show_plot=False, save_plot=True):
         print('done')
 
         print('calculate t-SNE... ', end='', flush=True)
+        # points = TSNE(n_components=2).fit_transform(all_encodings)
         points = TSNE(n_components=3).fit_transform(all_encodings)
         print('done')
 
         print('plotting points... ', end='', flush=True)
+        plt.rc('lines', markersize=1)
         fig = plt.figure(figsize=(12, 8))
         plt.grid(True, linewidth=0.2)
+        # plt.scatter(points[:, 0], points[:, 1])
         plt.scatter(points[:, 0], points[:, 1], c=points[:, 2])
         fig.tight_layout()
         print('done')
