@@ -111,16 +111,16 @@ class CellBiGanTestCase(TFTestCase):
             for ix, m_arg in enumerate(args):
                 self.assertDeepEqual(m_arg, mock.call_args[0][ix])
 
-        y_ones, y_zeros = tf.ones(TEST_BATCH_SIZE), tf.zeros(TEST_BATCH_SIZE)
-        assert_mock_calls(gen_train_mock, args=(rnd_encodings, y_ones))
-        assert_mock_calls(enc_train_mock, args=(sampled_batch, y_zeros))
+        y_gen, y_enc = tf.repeat(0.9, TEST_BATCH_SIZE), tf.repeat(0.1, TEST_BATCH_SIZE)
+        assert_mock_calls(gen_train_mock, args=(rnd_encodings, y_gen))
+        assert_mock_calls(enc_train_mock, args=(sampled_batch, y_enc))
         assert_mock_calls(gen_predict_mock, args=(rnd_encodings,))
         assert_mock_calls(enc_predict_mock, args=(sampled_batch,))
 
         self.assertDeepEqual(rnd_encodings, discr_train_mock.call_args_list[0][0][0][0])
         self.assertDeepEqual(gen_prediction, discr_train_mock.call_args_list[0][0][0][1])
-        self.assertDeepEqual(y_zeros, discr_train_mock.call_args_list[0][0][1])
+        self.assertDeepEqual(y_enc, discr_train_mock.call_args_list[0][0][1])
 
         self.assertDeepEqual(enc_prediction, discr_train_mock.call_args_list[1][0][0][0])
         self.assertDeepEqual(sampled_batch, discr_train_mock.call_args_list[1][0][0][1])
-        self.assertDeepEqual(y_ones, discr_train_mock.call_args_list[1][0][1])
+        self.assertDeepEqual(y_gen, discr_train_mock.call_args_list[1][0][1])

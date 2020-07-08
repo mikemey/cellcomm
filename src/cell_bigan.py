@@ -57,12 +57,12 @@ class CellBiGan:
     TRAIN_DISCRIMINATOR = (False, False, True)
 
     def __init__(self, encoding_size, gene_size,
-                 discr_optimizer=optimizers.RMSprop(learning_rate=0.0002, momentum=0.1),
-                 discr_loss=losses.mean_squared_error,
-                 gen_optimizer=optimizers.RMSprop(learning_rate=0.0002, momentum=0.1),
-                 gen_loss=losses.mean_squared_error,
-                 enc_optimizer=optimizers.RMSprop(learning_rate=0.0002, momentum=0.1),
-                 enc_loss=losses.mean_squared_error):
+                 gen_optimizer=optimizers.Adam(learning_rate=0.0005),
+                 gen_loss=losses.binary_crossentropy,
+                 enc_optimizer=optimizers.Adam(learning_rate=0.0005),
+                 enc_loss=losses.binary_crossentropy,
+                 discr_optimizer=optimizers.Adam(learning_rate=0.0005),
+                 discr_loss=losses.binary_crossentropy):
         self.encoding_size = encoding_size
         self._generator = _build_generator(encoding_size, gene_size)
         self._encoder = _build_encoder(encoding_size, gene_size)
@@ -89,9 +89,10 @@ class CellBiGan:
         self._generator.trainable, self._encoder.trainable, self._discriminator.trainable = mode
 
     def trainings_step(self, sampled_batch):
-        z = self._random_encoding_vector(len(sampled_batch))
-        y_ones = tf.ones(len(sampled_batch))
-        y_zeros = tf.zeros(len(sampled_batch))
+        batch_size = len(sampled_batch)
+        z = self._random_encoding_vector(batch_size)
+        y_ones = tf.repeat(0.9, batch_size)
+        y_zeros = tf.repeat(0.1, batch_size)
 
         g_loss = self.__train_generator(z, y_ones)
         e_loss = self.__train_encoder(sampled_batch, y_zeros)

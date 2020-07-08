@@ -5,7 +5,8 @@ def data_file(data_file_):
     return os.path.join(os.path.dirname(__file__), '..', 'data', data_file_)
 
 
-RUN_ID = '07-07-TAC_4-mse-rms0002'
+# RUN_ID = 'delme'
+RUN_ID = '07-08-TAC_4-bxe-adam-soft'
 MATRIX_FILES = [
     'GSE122930_TAC_1_week_repA+B_matrix.mtx',
     'GSE122930_TAC_4_weeks_repA+B_matrix.mtx',
