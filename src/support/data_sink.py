@@ -1,7 +1,7 @@
 from typing import Any, Iterable
 
 DEFAULT_LOG_DIR = 'logs'
-DEFAULT_BATCH_SIZE = 10
+DEFAULT_BATCH_SIZE = 1
 
 FILE_KEY = 'file'
 VALS_KEY = 'values'

@@ -5,7 +5,7 @@ from datetime import datetime
 import atexit
 import matplotlib.pyplot as plt
 import numpy as np
-# import sklearn.manifold as skm
+import sklearn.manifold as skm
 import sklearn.decomposition as skc
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -15,7 +15,7 @@ def data_file(data_file_):
 
 
 RUN_ID = 'delme'
-# RUN_ID = '07-09-1415_TAC-4'
+# RUN_ID = '07-09-1900-TAC-4-enc15'
 LOG_DIR = os.path.join('logs', RUN_ID)
 MATRIX_FILES = [
     'GSE122930_TAC_1_week_repA+B_matrix.mtx',
@@ -54,7 +54,7 @@ def log_losses():
     return add_losses
 
 
-def cluster(trainer_, reduction_algo, show_plot=False, save_plot=True, name=''):
+def cluster(trainer_, reduction_algo, show_plot=False, save_plot=True, name='', skip_steps=3):
     algo_name = type(reduction_algo).__name__.lower() + name
     full_id = f'{RUN_ID}_{algo_name}'
     plt.rc('lines', markersize=3)
@@ -80,7 +80,7 @@ def cluster(trainer_, reduction_algo, show_plot=False, save_plot=True, name=''):
         return fig
 
     def intercept(it, losses):
-        if show_plot or save_plot:
+        if (show_plot or save_plot) and (it % skip_steps) >= (skip_steps - 1):
             fig = create_plot(it, losses)
             if save_plot:
                 fig.savefig(f'{LOG_DIR}/{full_id}_{str(it).zfill(4)}.png')
@@ -104,17 +104,16 @@ if __name__ == '__main__':
     import umap
 
     check_log_dir()
-    trainer = CellTraining(data_file(MATRIX_FILES[1]), batch_size=128, encoding_size=20)
+    trainer = CellTraining(data_file(MATRIX_FILES[1]), batch_size=128, encoding_size=15)
     # trainer.network.summary()
     trainer.run(300, interceptor=combined_interceptor([
         print_losses,
         log_losses(),
         # cluster(trainer, reduction_algo=skm.Isomap(n_components=4, n_jobs=-1)),
-        # cluster(trainer, reduction_algo=skm.TSNE(n_components=3, n_jobs=-1)),
-        # skc.PCA(n_components=4).fit_transform()
-        cluster(trainer, reduction_algo=skc.PCA(n_components=2), name='_2d'),
+        cluster(trainer, reduction_algo=skm.TSNE(n_components=3, n_jobs=-1), name='_3d', skip_steps=5),
         cluster(trainer, reduction_algo=skc.PCA(n_components=3), name='_3d'),
-        cluster(trainer, reduction_algo=umap.UMAP(n_components=2), name='_2d'),
+        cluster(trainer, reduction_algo=skc.PCA(n_components=4), name='_4d'),
         cluster(trainer, reduction_algo=umap.UMAP(n_components=3), name='_3d'),
+        cluster(trainer, reduction_algo=umap.UMAP(n_components=4), name='_4d'),
         lambda _, __: print('-|')
     ]))
