@@ -52,6 +52,14 @@ class CellBiGanTestCase(TFTestCase):
             self.assertTrue(np.all(cell_encoding > 0), f'cell_encoding with values < 0:\n{cell_encoding}')
             self.assertTrue(np.all(cell_encoding < 1), f'cell_encoding with values > 1:\n{cell_encoding}')
 
+    def test_create_random_soft_encoding_vector(self):
+        cell_bigan = CellBiGan(encoding_size=10, gene_size=1)
+        for _ in range(100):
+            cell_encoding = cell_bigan._random_hot_encoding_vector(3)
+            self.assertEqual((3, 10), cell_encoding.shape)
+            self.assertTrue(np.all(cell_encoding > 0), f'cell_encoding with values < 0:\n{cell_encoding}')
+            self.assertTrue(np.all(cell_encoding < 1), f'cell_encoding with values > 1:\n{cell_encoding}')
+
     def test_bigan_models(self):
         bigan = CellBiGan(encoding_size=4, gene_size=6)
         gen_train_model = bigan._generator_train_model
@@ -87,7 +95,7 @@ class CellBiGanTestCase(TFTestCase):
 
         bigan = CellBiGan(encoding_size=1, gene_size=2)
         bigan._set_trainings_mode = trainings_mode_mock = MagicMock()
-        bigan._random_encoding_vector = random_enc_mock = MagicMock(return_value=rnd_encodings)
+        bigan._random_hot_encoding_vector = random_enc_mock = MagicMock(return_value=rnd_encodings)
         bigan._generator_train_model.train_on_batch = gen_train_mock = MagicMock(return_value='g-loss')
         bigan._encoder_train_model.train_on_batch = enc_train_mock = MagicMock(return_value='e-loss')
 

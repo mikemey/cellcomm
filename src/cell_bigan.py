@@ -88,6 +88,12 @@ class CellBiGan:
     def _random_encoding_vector(self, v_count):
         return tf.random.uniform(shape=(v_count, self.encoding_size), minval=0, maxval=1)
 
+    def _random_hot_encoding_vector(self, v_count):
+        rand_cats = np.random.randint(0, self.encoding_size, v_count)
+        hot_labels = tf.keras.utils.to_categorical(rand_cats, self.encoding_size)
+        rand_noise = np.random.uniform(0.05, 0.15, (v_count, self.encoding_size))
+        return (hot_labels * 0.8) + rand_noise
+
     def _set_trainings_mode(self, mode):
         self._generator.trainable, self._encoder.trainable, self._discriminator.trainable = mode
 
@@ -96,7 +102,7 @@ class CellBiGan:
 
     def trainings_step(self, sampled_batch):
         batch_size = len(sampled_batch)
-        z = self._random_encoding_vector(batch_size)
+        z = self._random_hot_encoding_vector(batch_size)
         y_ones = tf.repeat(0.9, batch_size)
         y_zeros = tf.repeat(0.1, batch_size)
 
