@@ -14,7 +14,7 @@ def data_file(data_file_):
 
 
 RUN_ID = 'delme'
-# RUN_ID = '07-09-0828-TAC_4-mse-adam'
+# RUN_ID = '07-09-0828_TAC-4_mse-adam'
 LOG_DIR = os.path.join('logs', RUN_ID)
 MATRIX_FILES = [
     'GSE122930_TAC_1_week_repA+B_matrix.mtx',
@@ -57,12 +57,13 @@ def cluster(trainer_, reduction_algo, show_plot=False, save_plot=True):
     algo_name = type(reduction_algo).__name__.lower()
     plt.rc('lines', markersize=3)
 
-    def create_plot():
+    def create_plot(it, losses):
         print(f'|-- calc {algo_name.upper()}... ', end='', flush=True)
         all_encodings = trainer_.network.predict_encoding(trainer_.data)
         points = reduction_algo.fit_transform(all_encodings)
 
         fig = plt.figure(figsize=(12, 8))
+        fig.suptitle(f'{RUN_ID} {it:6}, L: {sum(losses):6.3f}', fontsize=12)
         plt.grid(True, linewidth=0.2)
 
         if np.shape(points)[1] == 3:
@@ -73,9 +74,9 @@ def cluster(trainer_, reduction_algo, show_plot=False, save_plot=True):
             ax.scatter(points[:, 0], points[:, 1], points[:, 2], c=points[:, 3])
         return fig
 
-    def intercept(it, _):
+    def intercept(it, losses):
         if show_plot or save_plot:
-            fig = create_plot()
+            fig = create_plot(it, losses)
             if save_plot:
                 fig.savefig(f'{LOG_DIR}/{RUN_ID}_{algo_name}_{str(it).zfill(4)}.png')
             if show_plot:
