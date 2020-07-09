@@ -5,17 +5,17 @@ from tensorflow.keras import Model, layers, optimizers, losses
 
 def _build_generator(encoding_size, gene_size):
     encoding_in = layers.Input(shape=encoding_size)
-    x = layers.Dense(50, activation=tf.nn.relu)(encoding_in)
+    x = layers.Dense(50, activation=tf.nn.sigmoid)(encoding_in)
     x = layers.Concatenate()([x, encoding_in])
     x = layers.Dropout(0.1)(x)
-    x = layers.Dense(256, activation=tf.nn.relu)(x)
-    x = layers.BatchNormalization()(x)
+    x = layers.Dense(256, activation=tf.nn.sigmoid)(x)
+    # x = layers.BatchNormalization()(x)
     x = layers.Concatenate()([x, encoding_in])
     x = layers.Dropout(0.1)(x)
-    x = layers.Dense(256, activation=tf.nn.relu)(x)
-    x = layers.BatchNormalization()(x)
+    x = layers.Dense(256, activation=tf.nn.sigmoid)(x)
+    # x = layers.BatchNormalization()(x)
     x = layers.Dropout(0.1)(x)
-    x = layers.Dense(1024, activation=tf.nn.relu)(x)
+    x = layers.Dense(1024, activation=tf.nn.sigmoid)(x)
     x = layers.BatchNormalization()(x)
     x = layers.Concatenate()([x, encoding_in])
     cell_out = layers.Dense(gene_size, activation=tf.nn.relu)(x)
@@ -24,15 +24,16 @@ def _build_generator(encoding_size, gene_size):
 
 def _build_encoder(encoding_size, gene_size):
     cell_in = layers.Input(shape=gene_size)
-    normal_cell_in = layers.BatchNormalization()(cell_in)
-    x = layers.Dropout(0.15)(normal_cell_in)
-    x = layers.Dense(832, activation=tf.nn.relu)(x)
-    x = layers.Concatenate()([x, normal_cell_in])
+    # normal_cell_in = layers.BatchNormalization()(cell_in)
+    proc_cell_in = layers.Dense(832, activation=tf.nn.sigmoid)(cell_in)
+    # x = layers.Dropout(0.15)(proc_cell_in)
+    # x = layers.Concatenate()([x, proc_cell_in])
+    x = layers.Dropout(0.1)(proc_cell_in)
+    x = layers.Dense(300, activation=tf.nn.sigmoid)(x)
+    # x = layers.BatchNormalization()(x)
     x = layers.Dropout(0.1)(x)
-    x = layers.Dense(300, activation=tf.nn.relu)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Concatenate()([x, normal_cell_in])
-    encoding_out = layers.Dense(encoding_size, activation=tf.nn.sigmoid)(x)
+    x = layers.Concatenate()([x, proc_cell_in])
+    encoding_out = layers.Dense(encoding_size, activation=tf.nn.softmax)(x)
     return Model(cell_in, encoding_out, name='cell_encoder')
 
 
@@ -40,13 +41,15 @@ def _build_discriminator(encoding_size, gene_size):
     encoding_in = layers.Input(shape=encoding_size, name='encoding_input')
     cell_in = layers.Input(shape=gene_size, name='cell_input')
 
-    x = layers.Concatenate()([encoding_in, cell_in])
-    x = layers.Dropout(0.1)(x)
-    x = layers.BatchNormalization()(x)
+    combined_in = layers.Concatenate()([encoding_in, cell_in])
+    skip = layers.Dense(300, activation=tf.nn.sigmoid)(combined_in)
+    x = layers.Dropout(0.2)(skip)
     x = layers.Dense(300, activation=tf.nn.sigmoid)(x)
-    x = layers.Dropout(0.1)(x)
-    x = layers.Dense(300, activation=tf.nn.sigmoid)(x)
-    x = layers.BatchNormalization()(x)
+    x = layers.Concatenate()([x, skip])
+    # x = layers.BatchNormalization()(x)
+    x = layers.Dense(70, activation=tf.nn.sigmoid)(x)
+    x = layers.Dense(10, activation=tf.nn.sigmoid)(x)
+    # x = layers.BatchNormalization()(x)
     prob = layers.Dense(1, activation=tf.nn.sigmoid)(x)
     return Model([encoding_in, cell_in], prob, name='cell_discriminator')
 
@@ -57,12 +60,12 @@ class CellBiGan:
     TRAIN_DISCRIMINATOR = (False, False, True)
 
     def __init__(self, encoding_size, gene_size,
-                 gen_optimizer=optimizers.Adam(),
-                 gen_loss=losses.mse,
-                 enc_optimizer=optimizers.Adam(),
-                 enc_loss=losses.mse,
-                 discr_optimizer=optimizers.Adam(),
-                 discr_loss=losses.mse):
+                 gen_optimizer=optimizers.RMSprop(learning_rate=0.0008, momentum=0.9),
+                 gen_loss=losses.binary_crossentropy,
+                 enc_optimizer=optimizers.RMSprop(learning_rate=0.0008, momentum=0.9),
+                 enc_loss=losses.binary_crossentropy,
+                 discr_optimizer=optimizers.RMSprop(learning_rate=0.0008, momentum=0.9),
+                 discr_loss=losses.binary_crossentropy):
         self.encoding_size = encoding_size
         self._generator = _build_generator(encoding_size, gene_size)
         self._encoder = _build_encoder(encoding_size, gene_size)

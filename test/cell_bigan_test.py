@@ -35,7 +35,7 @@ class CellBiGanTestCase(TFTestCase):
         encoder = CellBiGan(encoding_size=12, gene_size=100)._encoder
         self.assertEqual((None, 100), encoder.input_shape)
         self.assertEqual((None, 12), encoder.output_shape)
-        self.assertEqual(tf.nn.sigmoid, encoder.layers[-1].activation)
+        self.assertEqual(tf.nn.softmax, encoder.layers[-1].activation)
 
     def test_discriminator_model(self):
         discriminator = CellBiGan(encoding_size=4, gene_size=5)._discriminator
