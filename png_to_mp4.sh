@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 run_id="07-09-1415_TAC-4"
-image_delay=45
+image_delay=40
 image_ids=(
 "pca_2d"
 "pca_3d"
