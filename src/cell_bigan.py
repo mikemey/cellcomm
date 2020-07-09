@@ -32,7 +32,7 @@ def _build_encoder(encoding_size, gene_size):
     x = layers.Dense(300, activation=tf.nn.sigmoid)(x)
     x = layers.Dense(100, activation=tf.nn.sigmoid)(x)
     x = layers.Concatenate()([x, proc_cell_in])
-    encoding_out = layers.Dense(encoding_size, activation=tf.nn.softmax)(x)
+    encoding_out = layers.Dense(encoding_size, activation=tf.nn.sigmoid)(x)
     return Model(cell_in, encoding_out, name='cell_encoder')
 
 
@@ -59,11 +59,11 @@ class CellBiGan:
     TRAIN_DISCRIMINATOR = (False, False, True)
 
     def __init__(self, encoding_size, gene_size,
-                 gen_optimizer=optimizers.RMSprop(learning_rate=0.0008, momentum=0.9),
-                 gen_loss=losses.binary_crossentropy,
-                 enc_optimizer=optimizers.RMSprop(learning_rate=0.0008, momentum=0.9),
-                 enc_loss=losses.binary_crossentropy,
-                 discr_optimizer=optimizers.RMSprop(learning_rate=0.0008, momentum=0.9),
+                 gen_optimizer=optimizers.Adam(),
+                 gen_loss=losses.mse,
+                 enc_optimizer=optimizers.Adam(),
+                 enc_loss=losses.mse,
+                 discr_optimizer=optimizers.Adam(),
                  discr_loss=losses.binary_crossentropy):
         self.encoding_size = encoding_size
         self._generator = _build_generator(encoding_size, gene_size)

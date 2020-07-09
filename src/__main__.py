@@ -14,8 +14,7 @@ def data_file(data_file_):
     return os.path.join(os.path.dirname(__file__), '..', 'data', data_file_)
 
 
-RUN_ID = 'delme'
-# RUN_ID = '07-09-1900-TAC-4-enc15'
+RUN_ID = '07-09-2125-TAC-4-e15'
 LOG_DIR = os.path.join('logs', RUN_ID)
 MATRIX_FILES = [
     'GSE122930_TAC_1_week_repA+B_matrix.mtx',
@@ -54,7 +53,7 @@ def log_losses():
     return add_losses
 
 
-def cluster(trainer_, reduction_algo, show_plot=False, save_plot=True, name='', skip_steps=3):
+def cluster(trainer_, reduction_algo, show_plot=False, save_plot=True, name='', skip_steps=2):
     algo_name = type(reduction_algo).__name__.lower() + name
     full_id = f'{RUN_ID}_{algo_name}'
     plt.rc('lines', markersize=3)
@@ -113,6 +112,7 @@ if __name__ == '__main__':
         cluster(trainer, reduction_algo=skm.TSNE(n_components=3, n_jobs=-1), name='_3d', skip_steps=5),
         cluster(trainer, reduction_algo=skc.PCA(n_components=3), name='_3d'),
         cluster(trainer, reduction_algo=skc.PCA(n_components=4), name='_4d'),
+        cluster(trainer, reduction_algo=umap.UMAP(n_components=2), name='_2d'),
         cluster(trainer, reduction_algo=umap.UMAP(n_components=3), name='_3d'),
         cluster(trainer, reduction_algo=umap.UMAP(n_components=4), name='_4d'),
         lambda _, __: print('-|')
