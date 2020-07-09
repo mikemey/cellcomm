@@ -1,5 +1,6 @@
 import os
 import pathlib
+from datetime import datetime
 
 import atexit
 import matplotlib.pyplot as plt
@@ -13,7 +14,7 @@ def data_file(data_file_):
 
 
 RUN_ID = 'delme'
-# RUN_ID = '07-08-2155-TAC_4-mse-adam-multi'
+# RUN_ID = '07-09-0828-TAC_4-mse-adam'
 LOG_DIR = os.path.join('logs', RUN_ID)
 MATRIX_FILES = [
     'GSE122930_TAC_1_week_repA+B_matrix.mtx',
@@ -33,7 +34,8 @@ def check_log_dir():
 
 def print_losses(it, all_losses):
     g_loss, e_loss, d_loss = all_losses
-    print(f'it:{it:7}  TOT: {sum(all_losses):6.3f}  G-L: {g_loss:6.3f}  E-L: {e_loss:6.3f}  D-L: {d_loss:6.3f}')
+    ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    print(f'[{ts}] it: {it:6}  TOT: {sum(all_losses):6.3f}  G-L: {g_loss:6.3f}  E-L: {e_loss:6.3f}  D-L: {d_loss:6.3f}')
 
 
 def log_losses():
@@ -53,7 +55,7 @@ def log_losses():
 
 def cluster(trainer_, reduction_algo, show_plot=False, save_plot=True):
     algo_name = type(reduction_algo).__name__.lower()
-    plt.rc('lines', markersize=1)
+    plt.rc('lines', markersize=3)
 
     def create_plot():
         print(f'|-- calc {algo_name.upper()}... ', end='', flush=True)
@@ -96,11 +98,10 @@ if __name__ == '__main__':
 
     check_log_dir()
     trainer = CellTraining(data_file(MATRIX_FILES[1]), batch_size=128, encoding_size=20)
-    trainer.run(9001, interceptor=combined_interceptor([
+    trainer.run(300, interceptor=combined_interceptor([
         print_losses,
         log_losses(),
         cluster(trainer, reduction_algo=skm.Isomap(n_components=4, n_jobs=-1)),
         cluster(trainer, reduction_algo=skm.TSNE(n_components=3, n_jobs=-1, random_state=0)),
-        cluster(trainer, reduction_algo=skm.LocallyLinearEmbedding(n_neighbors=10, n_components=3, n_jobs=-1, random_state=0)),
-        lambda _, __: print()
+        lambda _, __: print('-|')
     ]))
