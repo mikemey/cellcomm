@@ -5,7 +5,8 @@ from datetime import datetime
 import atexit
 import matplotlib.pyplot as plt
 import numpy as np
-import sklearn.manifold as skm
+# import sklearn.manifold as skm
+import sklearn.decomposition as skc
 from mpl_toolkits.mplot3d import Axes3D
 
 
@@ -14,7 +15,7 @@ def data_file(data_file_):
 
 
 RUN_ID = 'delme'
-# RUN_ID = '07-09-0828_TAC-4_mse-adam'
+# RUN_ID = '07-09-1415_TAC-4'
 LOG_DIR = os.path.join('logs', RUN_ID)
 MATRIX_FILES = [
     'GSE122930_TAC_1_week_repA+B_matrix.mtx',
@@ -53,19 +54,23 @@ def log_losses():
     return add_losses
 
 
-def cluster(trainer_, reduction_algo, show_plot=False, save_plot=True):
-    algo_name = type(reduction_algo).__name__.lower()
+def cluster(trainer_, reduction_algo, show_plot=False, save_plot=True, name=''):
+    algo_name = type(reduction_algo).__name__.lower() + name
+    full_id = f'{RUN_ID}_{algo_name}'
     plt.rc('lines', markersize=3)
 
     def create_plot(it, losses):
-        print(f'|-- calc {algo_name.upper()}... ', end='', flush=True)
+        print(f'-|-- calc {algo_name}... ', end='', flush=True)
         all_encodings = trainer_.network.predict_encoding(trainer_.data)
         points = reduction_algo.fit_transform(all_encodings)
 
         fig = plt.figure(figsize=(12, 8))
-        fig.suptitle(f'{RUN_ID} {it:6}, L: {sum(losses):6.3f}', fontsize=12)
+        fig.suptitle(f'{full_id} {it:6}, L: {sum(losses):6.3f}', fontsize=12)
         plt.grid(True, linewidth=0.2)
 
+        if np.shape(points)[1] == 2:
+            plt.scatter(points[:, 0], points[:, 1])
+            fig.tight_layout()
         if np.shape(points)[1] == 3:
             plt.scatter(points[:, 0], points[:, 1], c=points[:, 2])
             fig.tight_layout()
@@ -78,7 +83,7 @@ def cluster(trainer_, reduction_algo, show_plot=False, save_plot=True):
         if show_plot or save_plot:
             fig = create_plot(it, losses)
             if save_plot:
-                fig.savefig(f'{LOG_DIR}/{RUN_ID}_{algo_name}_{str(it).zfill(4)}.png')
+                fig.savefig(f'{LOG_DIR}/{full_id}_{str(it).zfill(4)}.png')
             if show_plot:
                 plt.show()
             plt.close(fig)
@@ -96,13 +101,20 @@ def combined_interceptor(interceptors):
 
 if __name__ == '__main__':
     from cell_type_training import CellTraining
+    import umap
 
     check_log_dir()
     trainer = CellTraining(data_file(MATRIX_FILES[1]), batch_size=128, encoding_size=20)
+    # trainer.network.summary()
     trainer.run(300, interceptor=combined_interceptor([
         print_losses,
         log_losses(),
-        cluster(trainer, reduction_algo=skm.Isomap(n_components=4, n_jobs=-1)),
-        cluster(trainer, reduction_algo=skm.TSNE(n_components=3, n_jobs=-1, random_state=0)),
+        # cluster(trainer, reduction_algo=skm.Isomap(n_components=4, n_jobs=-1)),
+        # cluster(trainer, reduction_algo=skm.TSNE(n_components=3, n_jobs=-1)),
+        # skc.PCA(n_components=4).fit_transform()
+        cluster(trainer, reduction_algo=skc.PCA(n_components=2), name='_2d'),
+        cluster(trainer, reduction_algo=skc.PCA(n_components=3), name='_3d'),
+        cluster(trainer, reduction_algo=umap.UMAP(n_components=2), name='_2d'),
+        cluster(trainer, reduction_algo=umap.UMAP(n_components=3), name='_3d'),
         lambda _, __: print('-|')
     ]))
