@@ -1,7 +1,11 @@
 import matplotlib.pyplot as plt
-import src.__main__ as ct
+import sys
 
-run_id = ct.RUN_ID
+if len(sys.argv) < 2:
+    print('\nrequired \'run-id\'')
+    exit(-1)
+
+run_id = sys.argv[1]
 save_image = False
 show_plot = True
 
