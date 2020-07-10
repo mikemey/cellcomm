@@ -53,12 +53,11 @@ class CellBiGanTestCase(TFTestCase):
             self.assertTrue(np.all(cell_encoding < 1), f'cell_encoding with values > 1:\n{cell_encoding}')
 
     def test_create_random_soft_encoding_vector(self):
-        cell_bigan = CellBiGan(encoding_size=10, gene_size=1)
-        for _ in range(100):
-            cell_encoding = cell_bigan._random_hot_encoding_vector(3)
-            self.assertEqual((3, 10), cell_encoding.shape)
-            self.assertTrue(np.all(cell_encoding > 0), f'cell_encoding with values < 0:\n{cell_encoding}')
-            self.assertTrue(np.all(cell_encoding < 1), f'cell_encoding with values > 1:\n{cell_encoding}')
+        np.random.seed(21)
+        cell_bigan = CellBiGan(encoding_size=4, gene_size=1)
+        hv = cell_bigan._random_hot_encoding_vector(5)
+        exp = np.array([[0, 1, 0, 0], [0, 0, 0, 1], [1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0]])
+        self.assertDeepEqual(exp, hv)
 
     def test_bigan_models(self):
         bigan = CellBiGan(encoding_size=4, gene_size=6)
@@ -134,9 +133,12 @@ class CellBiGanTestCase(TFTestCase):
         self.assertDeepEqual(y_gen, discr_train_mock.call_args_list[1][0][1])
 
     def test_predict_encoding(self):
-        bigan = CellBiGan(encoding_size=1, gene_size=1)
-        test_input, test_return = 'input', 'return'
-        bigan._encoder.predict = predict_mock = MagicMock(return_value=test_return)
+        bigan = CellBiGan(encoding_size=2, gene_size=4)
+        test_genes = [[5, 3, 1, 4], [1, 5, 13, 7]]
+        test_prediction = [[0.1, 0.3], [0.7, 0.3], [0.001, 0.99]]
+        test_hot_enc = [[0, 1], [1, 0], [0, 1]]
+        bigan._encoder.predict = predict_mock = MagicMock(return_value=test_prediction)
 
-        self.assertEqual(test_return, bigan.predict_encoding(test_input))
-        predict_mock.assert_called_with(test_input)
+        self.assertDeepEqual(test_prediction, bigan.encode_genes(test_genes, to_hot_vector=False))
+        self.assertDeepEqual(test_hot_enc, bigan.encode_genes(test_genes))
+        predict_mock.assert_called_with(test_genes)

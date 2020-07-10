@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras import Model, layers, optimizers, losses
+from tensorflow.keras import Model, layers, optimizers, losses, utils
 
 
 def _build_generator(encoding_size, gene_size):
@@ -32,7 +32,7 @@ def _build_encoder(encoding_size, gene_size):
     x = layers.Dense(300, activation=tf.nn.sigmoid)(x)
     x = layers.Dense(100, activation=tf.nn.sigmoid)(x)
     x = layers.Concatenate()([x, proc_cell_in])
-    encoding_out = layers.Dense(encoding_size, activation=tf.nn.sigmoid)(x)
+    encoding_out = layers.Dense(encoding_size, activation=tf.nn.softmax)(x)
     return Model(cell_in, encoding_out, name='cell_encoder')
 
 
@@ -62,22 +62,25 @@ class CellBiGan:
                  gen_optimizer=optimizers.Adam(),
                  gen_loss=losses.mse,
                  enc_optimizer=optimizers.Adam(),
-                 enc_loss=losses.mse,
+                 enc_loss=losses.categorical_crossentropy,
                  discr_optimizer=optimizers.Adam(),
                  discr_loss=losses.binary_crossentropy):
         self.encoding_size = encoding_size
         self._generator = _build_generator(encoding_size, gene_size)
+        self._generator.compile(optimizer=gen_optimizer, loss=gen_loss)
         self._encoder = _build_encoder(encoding_size, gene_size)
+        self._encoder.compile(optimizer=enc_optimizer, loss=enc_loss)
+
         self._discriminator = _build_discriminator(encoding_size, gene_size)
         self._discriminator.compile(optimizer=discr_optimizer, loss=discr_loss)
 
         gen_output = self._discriminator((self._generator.input, self._generator.output))
         self._generator_train_model = Model(self._generator.inputs, gen_output, name='generator-trainings-model')
-        self._generator_train_model.compile(optimizer=gen_optimizer, loss=gen_loss)
+        self._generator_train_model.compile(optimizer=discr_optimizer, loss=discr_loss)
 
         enc_output = self._discriminator((self._encoder.output, self._encoder.input))
         self._encoder_train_model = Model(self._encoder.inputs, enc_output, name='encoder-trainings-model')
-        self._encoder_train_model.compile(optimizer=enc_optimizer, loss=enc_loss)
+        self._encoder_train_model.compile(optimizer=discr_optimizer, loss=discr_loss)
 
     def summary(self):
         self._generator.summary()
@@ -88,16 +91,18 @@ class CellBiGan:
         return tf.random.uniform(shape=(v_count, self.encoding_size), minval=0, maxval=1)
 
     def _random_hot_encoding_vector(self, v_count):
-        rand_cats = np.random.randint(0, self.encoding_size, v_count)
-        hot_labels = tf.keras.utils.to_categorical(rand_cats, self.encoding_size)
-        rand_noise = np.random.uniform(0.05, 0.15, (v_count, self.encoding_size))
-        return (hot_labels * 0.8) + rand_noise
+        rand_ixs = np.random.randint(0, self.encoding_size, v_count)
+        return tf.keras.utils.to_categorical(rand_ixs, self.encoding_size)
 
     def _set_trainings_mode(self, mode):
         self._generator.trainable, self._encoder.trainable, self._discriminator.trainable = mode
 
-    def predict_encoding(self, cell_data):
-        return self._encoder.predict(cell_data)
+    def encode_genes(self, cell_data, to_hot_vector=True):
+        prediction = self._encoder.predict(cell_data)
+        if to_hot_vector:
+            argmax = tf.math.argmax(prediction, -1)
+            prediction = utils.to_categorical(argmax, num_classes=self.encoding_size)
+        return prediction
 
     def trainings_step(self, sampled_batch):
         batch_size = len(sampled_batch)
