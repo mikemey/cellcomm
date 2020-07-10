@@ -60,7 +60,7 @@ def cluster(trainer_, reduction_algo, show_plot=False, save_plot=True, name='', 
 
     def create_plot(it, losses):
         print(f'-|-- calc {algo_name}... ', end='', flush=True)
-        all_encodings = trainer_.network.encode_genes(trainer_.data)
+        all_encodings = trainer_.network.encode_genes(trainer_.data, to_hot_vector=False)
         points = reduction_algo.fit_transform(all_encodings)
 
         fig = plt.figure(figsize=(12, 8))
