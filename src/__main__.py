@@ -54,7 +54,7 @@ RUN_ID_TEMPLATE = '07-10-{}{}-TAC4-enc{}'
 if __name__ == '__main__':
     for encoding_size in range(13, 21):
         now = datetime.now()
-        run_id = RUN_ID_TEMPLATE.format(now.hour, now.minute, encoding_size)
+        run_id = RUN_ID_TEMPLATE.format(str(now.hour).zfill(2), str(now.minute).zfill(2), encoding_size)
         log_dir = log_file(run_id)
         data_source = data_file(MATRIX_FILES[1])
 
