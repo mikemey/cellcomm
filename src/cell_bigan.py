@@ -114,7 +114,7 @@ class CellBiGan:
         e_loss = self.__train_encoder(sampled_batch, y_zeros)
 
         d_loss_1 = self.__train_discriminator(z, self._generator.predict(z), y_zeros)
-        d_loss_2 = self.__train_discriminator(self._encoder.predict(sampled_batch), sampled_batch, y_ones)
+        d_loss_2 = self.__train_discriminator(self.encode_genes(sampled_batch), sampled_batch, y_ones)
         d_loss = np.mean([d_loss_1, d_loss_2])
         return g_loss, e_loss, d_loss
 
