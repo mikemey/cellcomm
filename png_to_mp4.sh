@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-run_id="07-09-2120-TAC-4-e15"
-image_delay=40
+run_id="07-10-1215-TAC-4-hard_enc15"
+image_delay=50
 image_ids=(
   "tsne_3d"
-  "pca_3d"
-  "pca_4d"
+#  "pca_3d"
+#  "pca_4d"
   "umap_2d"
   "umap_3d"
   "umap_4d"

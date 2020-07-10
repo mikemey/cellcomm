@@ -6,7 +6,6 @@ import atexit
 import matplotlib.pyplot as plt
 import numpy as np
 import sklearn.manifold as skm
-import sklearn.decomposition as skc
 from mpl_toolkits.mplot3d import Axes3D
 
 
@@ -14,7 +13,7 @@ def data_file(data_file_):
     return os.path.join(os.path.dirname(__file__), '..', 'data', data_file_)
 
 
-RUN_ID = '07-10-xxxx-TAC-4-e15'
+RUN_ID = '07-10-1215-TAC-4-hard_enc15'
 LOG_DIR = os.path.join('logs', RUN_ID)
 MATRIX_FILES = [
     'GSE122930_TAC_1_week_repA+B_matrix.mtx',
@@ -105,15 +104,15 @@ if __name__ == '__main__':
     check_log_dir()
     trainer = CellTraining(data_file(MATRIX_FILES[1]), batch_size=128, encoding_size=15)
     # trainer.network.summary()
-    # trainer.run(300, interceptor=combined_interceptor([
-    #     print_losses,
-    #     log_losses(),
-    #     # cluster(trainer, reduction_algo=skm.Isomap(n_components=4, n_jobs=-1)),
-    #     cluster(trainer, reduction_algo=skm.TSNE(n_components=3, n_jobs=-1), name='_3d', skip_steps=5),
-    #     cluster(trainer, reduction_algo=skc.PCA(n_components=3), name='_3d'),
-    #     cluster(trainer, reduction_algo=skc.PCA(n_components=4), name='_4d'),
-    #     cluster(trainer, reduction_algo=umap.UMAP(n_components=2), name='_2d'),
-    #     cluster(trainer, reduction_algo=umap.UMAP(n_components=3), name='_3d'),
-    #     cluster(trainer, reduction_algo=umap.UMAP(n_components=4), name='_4d'),
-    #     lambda _, __: print('-|')
-    # ]))
+    trainer.run(300, interceptor=combined_interceptor([
+        print_losses,
+        log_losses(),
+        # cluster(trainer, reduction_algo=skm.Isomap(n_components=4, n_jobs=-1)),
+        cluster(trainer, reduction_algo=skm.TSNE(n_components=3, n_jobs=-1), name='_3d', skip_steps=10),
+        # cluster(trainer, reduction_algo=skc.PCA(n_components=3), name='_3d'),
+        # cluster(trainer, reduction_algo=skc.PCA(n_components=4), name='_4d'),
+        cluster(trainer, reduction_algo=umap.UMAP(n_components=2), name='_2d', skip_steps=5),
+        cluster(trainer, reduction_algo=umap.UMAP(n_components=3), name='_3d', skip_steps=5),
+        cluster(trainer, reduction_algo=umap.UMAP(n_components=4), name='_4d', skip_steps=5),
+        lambda _, __: print('-|')
+    ]))
