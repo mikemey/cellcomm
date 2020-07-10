@@ -13,7 +13,7 @@ def data_file(data_file_):
     return os.path.join(os.path.dirname(__file__), '..', 'data', data_file_)
 
 
-RUN_ID = '07-10-1215-TAC-4-hard_enc15'
+RUN_ID = '07-10-1331-TAC-4-dim-rot'
 LOG_DIR = os.path.join('logs', RUN_ID)
 MATRIX_FILES = [
     'GSE122930_TAC_1_week_repA+B_matrix.mtx',
@@ -52,13 +52,13 @@ def log_losses():
     return add_losses
 
 
-def cluster(trainer_, reduction_algo, show_plot=False, save_plot=True, name='', skip_steps=2):
+def plot(trainer_, reduction_algo, show_plot=False, save_plot=True, name='', skip_steps=2):
     algo_name = type(reduction_algo).__name__.lower() + name
     full_id = f'{RUN_ID}_{algo_name}'
-    plt.rc('lines', markersize=3)
+    plt.rc('lines', markersize=2)
 
     def create_plot(it, losses):
-        print(f'-|-- calc {algo_name}... ', end='', flush=True)
+        print(f'-|-- {algo_name}... ', end='', flush=True)
         all_encodings = trainer_.network.encode_genes(trainer_.data, to_hot_vector=False)
         points = reduction_algo.fit_transform(all_encodings)
 
@@ -89,6 +89,35 @@ def cluster(trainer_, reduction_algo, show_plot=False, save_plot=True, name='', 
     return intercept
 
 
+def plot_rotate(trainer_, reduction_algo, skip_steps=2):
+    algo_name = type(reduction_algo).__name__.lower()
+    full_id = f'{RUN_ID}_{algo_name}'
+    plt.rc('lines', markersize=2)
+
+    rot_ixs = [
+        [0, 1, 2],
+        [1, 2, 0],
+        [2, 0, 1]
+    ]
+
+    def intercept(it, losses):
+        if (it % skip_steps) >= (skip_steps - 1):
+            all_encodings = trainer_.network.encode_genes(trainer_.data, to_hot_vector=False)
+            points = reduction_algo.fit_transform(all_encodings)
+            for p_ix, p_position in enumerate(rot_ixs):
+                title = f'{full_id}_pos{p_ix}'
+                fig = plt.figure(figsize=(12, 8))
+                fig.suptitle(f'{title} {it:6}, L: {sum(losses):6.3f}', fontsize=12)
+                plt.grid(True, linewidth=0.2)
+
+                plt.scatter(points[:, p_position[0]], points[:, p_position[1]], c=points[:, p_position[2]])
+                fig.tight_layout()
+                fig.savefig(f'{LOG_DIR}/{title}_{str(it).zfill(4)}.png')
+                plt.close(fig)
+
+    return intercept
+
+
 def combined_interceptor(interceptors):
     def call_all(it, all_losses):
         for ic in interceptors:
@@ -107,12 +136,13 @@ if __name__ == '__main__':
     trainer.run(300, interceptor=combined_interceptor([
         print_losses,
         log_losses(),
-        # cluster(trainer, reduction_algo=skm.Isomap(n_components=4, n_jobs=-1)),
-        cluster(trainer, reduction_algo=skm.TSNE(n_components=3, n_jobs=-1), name='_3d', skip_steps=10),
-        # cluster(trainer, reduction_algo=skc.PCA(n_components=3), name='_3d'),
-        # cluster(trainer, reduction_algo=skc.PCA(n_components=4), name='_4d'),
-        cluster(trainer, reduction_algo=umap.UMAP(n_components=2), name='_2d', skip_steps=5),
-        cluster(trainer, reduction_algo=umap.UMAP(n_components=3), name='_3d', skip_steps=5),
-        cluster(trainer, reduction_algo=umap.UMAP(n_components=4), name='_4d', skip_steps=5),
+        # plot(trainer, reduction_algo=skm.Isomap(n_components=4, n_jobs=-1)),
+        # plot(trainer, reduction_algo=skm.TSNE(n_components=3, n_jobs=-1, random_state=0), name='_3d', skip_steps=10),
+        # plot(trainer, reduction_algo=skc.PCA(n_components=3, random_state=0), name='_3d'),
+        # plot(trainer, reduction_algo=skc.PCA(n_components=4, random_state=0), name='_4d'),
+        plot_rotate(trainer, reduction_algo=umap.UMAP(n_components=3, random_state=0), skip_steps=10),
+        # plot(trainer, reduction_algo=umap.UMAP(n_components=2, random_state=0), name='_2d', skip_steps=1),
+        # plot(trainer, reduction_algo=umap.UMAP(n_components=3, random_state=0), name='_3d', skip_steps=1),
+        # plot(trainer, reduction_algo=umap.UMAP(n_components=4, random_state=0), name='_4d', skip_steps=1),
         lambda _, __: print('-|')
     ]))
