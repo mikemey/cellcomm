@@ -105,7 +105,8 @@ class CellBiGan:
         return prediction
 
     def generate_cells(self, z):
-        return self._generator.predict(z)
+        prediction = self._generator.predict(z)
+        return tf.math.round(prediction)
 
     def trainings_step(self, sampled_batch):
         batch_size = len(sampled_batch)

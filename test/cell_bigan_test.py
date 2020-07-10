@@ -133,7 +133,7 @@ class CellBiGanTestCase(TFTestCase):
         self.assertDeepEqual(sampled_batch, discr_train_mock.call_args_list[1][0][0][1])
         self.assertDeepEqual(y_gen, discr_train_mock.call_args_list[1][0][1])
 
-    def test_predict_encoding(self):
+    def test_encode_genes(self):
         bigan = CellBiGan(encoding_size=2, gene_size=4)
         test_genes = [[5, 3, 1, 4], [1, 5, 13, 7]]
         test_prediction = [[0.1, 0.3], [0.7, 0.3], [0.001, 0.99]]
@@ -143,3 +143,15 @@ class CellBiGanTestCase(TFTestCase):
         self.assertDeepEqual(test_prediction, bigan.encode_genes(test_genes, to_hot_vector=False))
         self.assertDeepEqual(test_hot_enc, bigan.encode_genes(test_genes))
         predict_mock.assert_called_with(test_genes)
+
+    def test_generate_data(self):
+        random_input = [[1, 0], [0, 1]]
+        test_prediction = [[0.3, 12.59939265, 2.4894546, 0.01],
+                           [0.9, 4.7007282, 0, 2.07244989]]
+        expected_cells = [[0, 13, 2, 0], [1, 5, 0, 2]]
+        bigan = CellBiGan(encoding_size=2, gene_size=4)
+        bigan._generator.predict = predict_mock = MagicMock(return_value=test_prediction)
+
+        gen_cells = bigan.generate_cells(random_input)
+        self.assertDeepEqual(expected_cells, gen_cells)
+        predict_mock.assert_called_with(random_input)
