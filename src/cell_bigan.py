@@ -87,11 +87,11 @@ class CellBiGan:
         self._encoder.summary()
         self._discriminator.summary()
 
-    def _random_encoding_vector(self, v_count):
-        return tf.random.uniform(shape=(v_count, self.encoding_size), minval=0, maxval=1)
+    def _random_encoding_vector(self, batch_size):
+        return tf.random.uniform(shape=(batch_size, self.encoding_size), minval=0, maxval=1)
 
-    def _random_hot_encoding_vector(self, v_count):
-        rand_ixs = np.random.randint(0, self.encoding_size, v_count)
+    def _random_hot_encoding_vector(self, batch_size):
+        rand_ixs = np.random.randint(0, self.encoding_size, batch_size)
         return tf.keras.utils.to_categorical(rand_ixs, self.encoding_size)
 
     def _set_trainings_mode(self, mode):
@@ -104,6 +104,9 @@ class CellBiGan:
             prediction = utils.to_categorical(argmax, num_classes=self.encoding_size)
         return prediction
 
+    def generate_cells(self, z):
+        return self._generator.predict(z)
+
     def trainings_step(self, sampled_batch):
         batch_size = len(sampled_batch)
         z = self._random_hot_encoding_vector(batch_size)
@@ -113,7 +116,8 @@ class CellBiGan:
         g_loss = self.__train_generator(z, y_ones)
         e_loss = self.__train_encoder(sampled_batch, y_zeros)
 
-        d_loss_1 = self.__train_discriminator(z, self._generator.predict(z), y_zeros)
+        z = self._random_hot_encoding_vector(batch_size)
+        d_loss_1 = self.__train_discriminator(z, self.generate_cells(z), y_zeros)
         d_loss_2 = self.__train_discriminator(self.encode_genes(sampled_batch), sampled_batch, y_ones)
         d_loss = np.mean([d_loss_1, d_loss_2])
         return g_loss, e_loss, d_loss

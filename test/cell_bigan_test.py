@@ -100,7 +100,7 @@ class CellBiGanTestCase(TFTestCase):
 
         gen_prediction = tf.constant([[10, 11]] * TEST_BATCH_SIZE)
         enc_prediction = tf.constant([[2]] * TEST_BATCH_SIZE)
-        bigan._generator.predict = gen_predict_mock = MagicMock(return_value=gen_prediction)
+        bigan.generate_cells = gen_cells_mock = MagicMock(return_value=gen_prediction)
         bigan.encode_genes = enc_genes_mock = MagicMock(return_value=enc_prediction)
         bigan._discriminator.train_on_batch = discr_train_mock = MagicMock(side_effect=[3, 5])
 
@@ -112,7 +112,8 @@ class CellBiGanTestCase(TFTestCase):
             call(CellBiGan.TRAIN_ENCODER),
             call(CellBiGan.TRAIN_DISCRIMINATOR)]
         )
-        random_enc_mock.assert_called_once_with(TEST_BATCH_SIZE)
+        self.assertEqual(2, random_enc_mock.call_count)
+        random_enc_mock.assert_called_with(TEST_BATCH_SIZE)
 
         def assert_mock_calls(mock, args):
             for ix, m_arg in enumerate(args):
@@ -121,7 +122,7 @@ class CellBiGanTestCase(TFTestCase):
         y_gen, y_enc = tf.repeat(0.9, TEST_BATCH_SIZE), tf.repeat(0.1, TEST_BATCH_SIZE)
         assert_mock_calls(gen_train_mock, args=(rnd_encodings, y_gen))
         assert_mock_calls(enc_train_mock, args=(sampled_batch, y_enc))
-        assert_mock_calls(gen_predict_mock, args=(rnd_encodings,))
+        assert_mock_calls(gen_cells_mock, args=(rnd_encodings,))
         assert_mock_calls(enc_genes_mock, args=(sampled_batch,))
 
         self.assertDeepEqual(rnd_encodings, discr_train_mock.call_args_list[0][0][0][0])
