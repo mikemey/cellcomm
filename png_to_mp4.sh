@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 
-run_id="07-10-1215-TAC-4-hard_enc15"
+run_id="07-10-1340-TAC-4-dim-rot"
 image_delay=50
 image_ids=(
   "tsne_3d"
+  "umap_pos0"
+  "umap_pos1"
+  "umap_pos2"
 #  "pca_3d"
 #  "pca_4d"
-  "umap_2d"
-  "umap_3d"
-  "umap_4d"
+#  "umap_2d"
+#  "umap_3d"
+#  "umap_4d"
 )
 
 for iid in ${image_ids[@]}; do

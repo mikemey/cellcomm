@@ -13,7 +13,7 @@ def data_file(data_file_):
     return os.path.join(os.path.dirname(__file__), '..', 'data', data_file_)
 
 
-RUN_ID = '07-10-1331-TAC-4-dim-rot'
+RUN_ID = '07-10-1340-TAC-4-dim-rot'
 LOG_DIR = os.path.join('logs', RUN_ID)
 MATRIX_FILES = [
     'GSE122930_TAC_1_week_repA+B_matrix.mtx',
@@ -102,6 +102,7 @@ def plot_rotate(trainer_, reduction_algo, skip_steps=2):
 
     def intercept(it, losses):
         if (it % skip_steps) >= (skip_steps - 1):
+            print(f'-|-- {algo_name}... ', end='', flush=True)
             all_encodings = trainer_.network.encode_genes(trainer_.data, to_hot_vector=False)
             points = reduction_algo.fit_transform(all_encodings)
             for p_ix, p_position in enumerate(rot_ixs):
@@ -137,10 +138,10 @@ if __name__ == '__main__':
         print_losses,
         log_losses(),
         # plot(trainer, reduction_algo=skm.Isomap(n_components=4, n_jobs=-1)),
-        # plot(trainer, reduction_algo=skm.TSNE(n_components=3, n_jobs=-1, random_state=0), name='_3d', skip_steps=10),
+        plot(trainer, reduction_algo=skm.TSNE(n_components=3, n_jobs=-1, random_state=0), name='_3d', skip_steps=10),
         # plot(trainer, reduction_algo=skc.PCA(n_components=3, random_state=0), name='_3d'),
         # plot(trainer, reduction_algo=skc.PCA(n_components=4, random_state=0), name='_4d'),
-        plot_rotate(trainer, reduction_algo=umap.UMAP(n_components=3, random_state=0), skip_steps=10),
+        plot_rotate(trainer, reduction_algo=umap.UMAP(n_components=3, random_state=0), skip_steps=1),
         # plot(trainer, reduction_algo=umap.UMAP(n_components=2, random_state=0), name='_2d', skip_steps=1),
         # plot(trainer, reduction_algo=umap.UMAP(n_components=3, random_state=0), name='_3d', skip_steps=1),
         # plot(trainer, reduction_algo=umap.UMAP(n_components=4, random_state=0), name='_4d', skip_steps=1),
