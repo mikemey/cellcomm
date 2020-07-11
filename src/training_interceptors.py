@@ -105,23 +105,24 @@ class ParamInterceptors:
 
         return intercept
 
-    def plot_clusters_on_data(self, trainer_):
+    def plot_clusters_on_data(self, trainer_, skip_steps=2):
         algo_metas = [(skm.TSNE, 'tsne'), (umap.UMAP, 'umap')]
 
         all_2d_points = [create_2d_points(*a_meta, trainer_.data) for a_meta in algo_metas]
         print(f'- Done')
 
         def intercept(it, losses):
-            all_encodings = trainer_.network.encode_genes(trainer_.data, to_hot_vector=False)
-            all_color_points = [run_fit_transform(*a_meta, all_encodings) for a_meta in algo_metas]
+            if (it % skip_steps) >= (skip_steps - 1):
+                all_encodings = trainer_.network.encode_genes(trainer_.data, to_hot_vector=False)
+                all_color_points = [run_fit_transform(*a_meta, all_encodings) for a_meta in algo_metas]
 
-            for a_meta, xy_points, color_points in zip(algo_metas, all_2d_points, all_color_points):
-                full_id = f'{self.run_id}_{a_meta[1]}'
-                fig = create_default_figure(full_id, it, losses)
-                plt.scatter(xy_points[:, 0], xy_points[:, 1], c=color_points)
-                fig.tight_layout()
-                fig.savefig(f'{self.log_dir}/{full_id}_{str(it).zfill(4)}.png')
-                plt.close(fig)
+                for a_meta, xy_points, color_points in zip(algo_metas, all_2d_points, all_color_points):
+                    full_id = f'{self.run_id}_{a_meta[1]}'
+                    fig = create_default_figure(full_id, it, losses)
+                    plt.scatter(xy_points[:, 0], xy_points[:, 1], c=color_points)
+                    fig.tight_layout()
+                    fig.savefig(f'{self.log_dir}/{full_id}_{str(it).zfill(4)}.png')
+                    plt.close(fig)
 
         return intercept
 

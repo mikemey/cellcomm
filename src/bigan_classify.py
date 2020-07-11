@@ -40,8 +40,9 @@ def _build_encoder(encoding_size, gene_size):
 def _build_discriminator(encoding_size, gene_size):
     encoding_in = layers.Input(shape=encoding_size, name='encoding_input')
     cell_in = layers.Input(shape=gene_size, name='cell_input')
+    cell_in_norm = layers.BatchNormalization()(cell_in)
 
-    combined_in = layers.Concatenate()([encoding_in, cell_in])
+    combined_in = layers.Concatenate()([encoding_in, cell_in_norm])
     skip = layers.Dense(700, activation=tf.nn.sigmoid)(combined_in)
     x = layers.Dropout(0.2)(skip)
     x = layers.Dense(300, activation=tf.nn.sigmoid)(x)
@@ -64,11 +65,11 @@ class ClassifyCellBiGan:
             self, encoding_size, gene_size,
             generator_factory=_build_generator,
             gen_optimizer=optimizers.Adam(),
-            gen_loss=losses.mse,
+            gen_loss=losses.binary_crossentropy,
 
             encoder_factory=_build_encoder,
             enc_optimizer=optimizers.Adam(),
-            enc_loss=losses.categorical_crossentropy,
+            enc_loss=losses.binary_crossentropy,
 
             discriminator_factory=_build_discriminator,
             discr_optimizer=optimizers.Adam(),

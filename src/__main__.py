@@ -47,8 +47,7 @@ def check_log_dir(log_dir_):
     log_path.mkdir(parents=True)
 
 
-RUN_ID_TEMPLATE = '{}-DELME-enc{}'
-# RUN_ID_TEMPLATE = '{}-TAC4-clust-col-enc{}'
+RUN_ID_TEMPLATE = '{}-TAC4-clust-col-enc{}'
 
 if __name__ == '__main__':
     for encoding_size in range(3, 21):
@@ -60,4 +59,4 @@ if __name__ == '__main__':
         check_log_dir(log_dir)
         trainer = CellTraining(data_source, batch_size=128, encoding_size=encoding_size)
         interceptors = create_interceptors(log_dir, run_id, trainer)
-        trainer.run(300, interceptor=interceptors)
+        trainer.run(150, interceptor=interceptors)
