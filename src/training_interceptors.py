@@ -3,6 +3,8 @@ from datetime import datetime
 import atexit
 import matplotlib.pyplot as plt
 import numpy as np
+import sklearn.manifold as skm
+import umap
 from mpl_toolkits.mplot3d import Axes3D
 
 from support.data_sink import DataSink
@@ -14,6 +16,15 @@ def combined_interceptor(interceptors):
             ic(it, all_losses)
 
     return call_all
+
+
+def create_default_figure(title, it, losses):
+    plt.rc('lines', markersize=2)
+
+    fig = plt.figure(figsize=(12, 8))
+    fig.suptitle(f'{title} {it:6}, L: {sum(losses):6.3f}', fontsize=12)
+    plt.grid(True, linewidth=0.2)
+    return fig
 
 
 LOSSES_ID = 'losses'
@@ -36,19 +47,15 @@ class ParamInterceptors:
         g_loss, e_loss, d_loss = all_losses
         self.sink.add_data(LOSSES_ID, [it, sum(all_losses), g_loss, e_loss, d_loss])
 
-    def plot(self, trainer_, reduction_algo, show_plot=False, save_plot=True, name='', skip_steps=2):
+    def plot_fully(self, trainer_, reduction_algo, show_plot=False, save_plot=True, name='', skip_steps=2):
         algo_name = type(reduction_algo).__name__.lower() + name
         full_id = f'{self.run_id}_{algo_name}'
-        plt.rc('lines', markersize=2)
 
         def create_plot(it, losses):
             print(f'--|-- {algo_name}... ', end='', flush=True)
             all_encodings = trainer_.network.encode_genes(trainer_.data, to_hot_vector=False)
             points = reduction_algo.fit_transform(all_encodings)
-
-            fig = plt.figure(figsize=(12, 8))
-            fig.suptitle(f'{full_id} {it:6}, L: {sum(losses):6.3f}', fontsize=12)
-            plt.grid(True, linewidth=0.2)
+            fig = create_default_figure(full_id, it, losses)
 
             if np.shape(points)[1] == 2:
                 plt.scatter(points[:, 0], points[:, 1])
@@ -75,7 +82,6 @@ class ParamInterceptors:
     def plot_rotate(self, trainer_, reduction_algo, skip_steps=2):
         algo_name = type(reduction_algo).__name__.lower()
         full_id = f'{self.run_id}_{algo_name}'
-        plt.rc('lines', markersize=2)
 
         rot_ixs = [
             [0, 1, 2],
@@ -90,9 +96,7 @@ class ParamInterceptors:
                 points = reduction_algo.fit_transform(all_encodings)
                 for p_ix, p_position in enumerate(rot_ixs):
                     title = f'{full_id}_pos{p_ix}'
-                    fig = plt.figure(figsize=(12, 8))
-                    fig.suptitle(f'{title} {it:6}, L: {sum(losses):6.3f}', fontsize=12)
-                    plt.grid(True, linewidth=0.2)
+                    fig = create_default_figure(title, it, losses)
 
                     plt.scatter(points[:, p_position[0]], points[:, p_position[1]], c=points[:, p_position[2]])
                     fig.tight_layout()
@@ -100,3 +104,44 @@ class ParamInterceptors:
                     plt.close(fig)
 
         return intercept
+
+    def plot_clusters_on_data(self, trainer_):
+        algo_metas = [(skm.TSNE, 'tsne'), (umap.UMAP, 'umap')]
+
+        all_2d_points = [create_2d_points(*a_meta, trainer_.data) for a_meta in algo_metas]
+        print(f'- Done')
+
+        def intercept(it, losses):
+            all_encodings = trainer_.network.encode_genes(trainer_.data, to_hot_vector=False)
+            all_color_points = [run_fit_transform(*a_meta, all_encodings) for a_meta in algo_metas]
+
+            for a_meta, xy_points, color_points in zip(algo_metas, all_2d_points, all_color_points):
+                full_id = f'{self.run_id}_{a_meta[1]}'
+                fig = create_default_figure(full_id, it, losses)
+                plt.scatter(xy_points[:, 0], xy_points[:, 1], c=color_points)
+                fig.tight_layout()
+                fig.savefig(f'{self.log_dir}/{full_id}_{str(it).zfill(4)}.png')
+                plt.close(fig)
+
+        return intercept
+
+
+def create_2d_points(algo_class, algo_name, data):
+    print(f'calculating 2D "{algo_name}"... ', end='', flush=True)
+    points = create_algo(algo_class, n_components=2).fit_transform(data)
+    print(f'"{algo_name}" ok ', end='', flush=True)
+    return points
+
+
+def run_fit_transform(algo_class, algo_name, encodings):
+    print(f'--|-- {algo_name} ', end='', flush=True)
+    color_points = create_algo(algo_class, n_components=1).fit_transform(encodings)
+    print(f'"{algo_name}" ok ', end='', flush=True)
+    return color_points
+
+
+def create_algo(algo_class, n_components):
+    try:
+        return algo_class(n_components=n_components, random_state=0, n_jobs=-1)
+    except TypeError:
+        return algo_class(n_components=n_components, random_state=0)

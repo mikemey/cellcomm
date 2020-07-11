@@ -4,7 +4,7 @@ import pathlib
 import sklearn.manifold as skm
 import umap
 
-from cell_type_training import CellTraining
+from cell_type_training import *
 from training_interceptors import *
 
 
@@ -30,14 +30,12 @@ def create_interceptors(log_dir_, run_id_, trainer_):
     return combined_interceptor([
         ics.print_losses,
         ics.log_losses,
+        ics.plot_clusters_on_data(trainer_),
         # ics.plot(trainer, reduction_algo=skm.Isomap(n_components=4, n_jobs=-1)),
-        ics.plot(trainer_, reduction_algo=skm.TSNE(n_components=3, n_jobs=-1, random_state=0), name='_3d', skip_steps=10),
         # ics.plot(trainer, reduction_algo=skc.PCA(n_components=3, random_state=0), name='_3d'),
-        # ics.plot(trainer, reduction_algo=skc.PCA(n_components=4, random_state=0), name='_4d'),
-        ics.plot_rotate(trainer_, reduction_algo=umap.UMAP(n_components=3, random_state=0), skip_steps=1),
-        # ics.plot(trainer, reduction_algo=umap.UMAP(n_components=2, random_state=0), name='_2d', skip_steps=1),
-        # ics.plot(trainer, reduction_algo=umap.UMAP(n_components=3, random_state=0), name='_3d', skip_steps=1),
-        ics.plot(trainer_, reduction_algo=umap.UMAP(n_components=4, random_state=0), name='_4d', skip_steps=1),
+        # ics.plot(trainer_, reduction_algo=skm.TSNE(n_components=3, n_jobs=-1, random_state=0), name='_3d', skip_steps=10),
+        # ics.plot_rotate(trainer_, reduction_algo=umap.UMAP(n_components=3, random_state=0), skip_steps=1),
+        # ics.plot(trainer_, reduction_algo=umap.UMAP(n_components=4, random_state=0), name='_4d', skip_steps=1),
         lambda _, __: print('-|')
     ])
 
@@ -49,12 +47,13 @@ def check_log_dir(log_dir_):
     log_path.mkdir(parents=True)
 
 
-RUN_ID_TEMPLATE = '{}-TAC4-enc{}'
+RUN_ID_TEMPLATE = '{}-DELME-enc{}'
+# RUN_ID_TEMPLATE = '{}-TAC4-clust-col-enc{}'
 
 if __name__ == '__main__':
-    for encoding_size in range(13, 21):
+    for encoding_size in range(3, 21):
         now = datetime.now().strftime('%m-%d-%H%M')
-        run_id = RUN_ID_TEMPLATE.format(now, encoding_size)
+        run_id = RUN_ID_TEMPLATE.format(now, str(encoding_size).zfill(2))
         log_dir = log_file(run_id)
         data_source = data_file(MATRIX_FILES[1])
 
