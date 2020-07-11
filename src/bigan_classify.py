@@ -47,9 +47,9 @@ def _build_discriminator(encoding_size, gene_size):
     x = layers.Dense(300, activation=tf.nn.sigmoid)(x)
     x = layers.Concatenate()([x, skip])
     # x = layers.BatchNormalization()(x)
-    x = layers.Dense(70, activation=tf.nn.sigmoid)(x)
+    x = layers.Dense(200, activation=tf.nn.sigmoid)(x)
     x = layers.Dropout(0.15)(x)
-    x = layers.Dense(10, activation=tf.nn.sigmoid)(x)
+    x = layers.Dense(20, activation=tf.nn.sigmoid)(x)
     # x = layers.BatchNormalization()(x)
     prob = layers.Dense(1, activation=tf.nn.sigmoid)(x)
     return Model([encoding_in, cell_in], prob, name='cell_discriminator')
@@ -60,20 +60,27 @@ class ClassifyCellBiGan:
     TRAIN_ENCODER = (False, True, False)
     TRAIN_DISCRIMINATOR = (False, False, True)
 
-    def __init__(self, encoding_size, gene_size,
-                 gen_optimizer=optimizers.Adam(),
-                 gen_loss=losses.mse,
-                 enc_optimizer=optimizers.Adam(),
-                 enc_loss=losses.categorical_crossentropy,
-                 discr_optimizer=optimizers.Adam(),
-                 discr_loss=losses.binary_crossentropy):
+    def __init__(
+            self, encoding_size, gene_size,
+            generator_factory=_build_generator,
+            gen_optimizer=optimizers.Adam(),
+            gen_loss=losses.mse,
+
+            encoder_factory=_build_encoder,
+            enc_optimizer=optimizers.Adam(),
+            enc_loss=losses.categorical_crossentropy,
+
+            discriminator_factory=_build_discriminator,
+            discr_optimizer=optimizers.Adam(),
+            discr_loss=losses.binary_crossentropy
+    ):
         self.encoding_size = encoding_size
-        self._generator = _build_generator(encoding_size, gene_size)
+        self._generator = generator_factory(encoding_size, gene_size)
         self._generator.compile(optimizer=gen_optimizer, loss=gen_loss)
-        self._encoder = _build_encoder(encoding_size, gene_size)
+        self._encoder = encoder_factory(encoding_size, gene_size)
         self._encoder.compile(optimizer=enc_optimizer, loss=enc_loss)
 
-        self._discriminator = _build_discriminator(encoding_size, gene_size)
+        self._discriminator = discriminator_factory(encoding_size, gene_size)
         self._discriminator.compile(optimizer=discr_optimizer, loss=discr_loss)
 
         gen_output = self._discriminator((self._generator.input, self._generator.output))
@@ -90,14 +97,6 @@ class ClassifyCellBiGan:
         self._discriminator.summary()
 
     def _get_encoding_vector(self, batch_size):
-        pass
-
-    def print_some(self):
-        print('\n------------UND I AH ==============================================')
-    def _random_encoding_vector(self, batch_size):
-        return tf.random.uniform(shape=(batch_size, self.encoding_size), minval=0, maxval=1)
-
-    def _random_hot_encoding_vector(self, batch_size):
         rand_ixs = np.random.randint(0, self.encoding_size, batch_size)
         return tf.keras.utils.to_categorical(rand_ixs, self.encoding_size)
 
@@ -117,14 +116,14 @@ class ClassifyCellBiGan:
 
     def trainings_step(self, sampled_batch):
         batch_size = len(sampled_batch)
-        z = self._random_hot_encoding_vector(batch_size)
+        z = self._get_encoding_vector(batch_size)
         y_ones = tf.repeat(0.9, batch_size)
         y_zeros = tf.repeat(0.1, batch_size)
 
         g_loss = self.__train_generator(z, y_ones)
         e_loss = self.__train_encoder(sampled_batch, y_zeros)
 
-        z = self._random_hot_encoding_vector(batch_size)
+        z = self._get_encoding_vector(batch_size)
         d_loss_1 = self.__train_discriminator(z, self.generate_cells(z), y_zeros)
         d_loss_2 = self.__train_discriminator(self.encode_genes(sampled_batch), sampled_batch, y_ones)
         d_loss = np.mean([d_loss_1, d_loss_2])
@@ -141,7 +140,3 @@ class ClassifyCellBiGan:
     def __train_discriminator(self, encoding, cell_data, target):
         self._set_trainings_mode(self.TRAIN_DISCRIMINATOR)
         return self._discriminator.train_on_batch((encoding, cell_data), target)
-
-
-class ContinuousCellBiGan(ClassifyCellBiGan):
-    pass

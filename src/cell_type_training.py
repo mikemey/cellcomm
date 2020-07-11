@@ -2,7 +2,7 @@ from typing import Callable, Any
 
 import pandas as pd
 
-from bigans import CellBiGan
+from bigan_classify import ClassifyCellBiGan
 
 
 def load_matrix(file):
@@ -19,7 +19,7 @@ class CellTraining:
     def __init__(self, matrix_file, batch_size, encoding_size):
         self.batch_size = batch_size
         self.data = load_matrix(matrix_file)
-        self.network = CellBiGan(encoding_size, gene_size=self.data.shape[1])
+        self.network = ClassifyCellBiGan(encoding_size, gene_size=self.data.shape[1])
 
     def _sample_cell_data(self, random_seed=None):
         return self.data.sample(self.batch_size, random_state=random_seed)
