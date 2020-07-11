@@ -2,7 +2,7 @@ from typing import Callable, Any
 
 import pandas as pd
 
-from cell_bigan import CellBiGan
+from bigans import CellBiGan
 
 
 def load_matrix(file):

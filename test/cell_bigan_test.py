@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 from pandas import DataFrame
 
-from cell_bigan import CellBiGan
+from bigans import CellBiGan
 from tf_testcase import TFTestCase
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '5'
