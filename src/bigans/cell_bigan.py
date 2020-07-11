@@ -55,7 +55,7 @@ def _build_discriminator(encoding_size, gene_size):
     return Model([encoding_in, cell_in], prob, name='cell_discriminator')
 
 
-class CellBiGan:
+class ClassifyCellBiGan:
     TRAIN_GENERATOR = (True, False, False)
     TRAIN_ENCODER = (False, True, False)
     TRAIN_DISCRIMINATOR = (False, False, True)
@@ -89,6 +89,11 @@ class CellBiGan:
         self._encoder.summary()
         self._discriminator.summary()
 
+    def _get_encoding_vector(self, batch_size):
+        pass
+
+    def print_some(self):
+        print('\n------------UND I AH ==============================================')
     def _random_encoding_vector(self, batch_size):
         return tf.random.uniform(shape=(batch_size, self.encoding_size), minval=0, maxval=1)
 
@@ -136,3 +141,7 @@ class CellBiGan:
     def __train_discriminator(self, encoding, cell_data, target):
         self._set_trainings_mode(self.TRAIN_DISCRIMINATOR)
         return self._discriminator.train_on_batch((encoding, cell_data), target)
+
+
+class ContinuousCellBiGan(ClassifyCellBiGan):
+    pass
