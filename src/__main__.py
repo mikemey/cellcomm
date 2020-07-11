@@ -49,12 +49,12 @@ def check_log_dir(log_dir_):
     log_path.mkdir(parents=True)
 
 
-RUN_ID_TEMPLATE = '07-10-{}{}-TAC4-enc{}'
+RUN_ID_TEMPLATE = '{}-TAC4-enc{}'
 
 if __name__ == '__main__':
     for encoding_size in range(13, 21):
-        now = datetime.now()
-        run_id = RUN_ID_TEMPLATE.format(str(now.hour).zfill(2), str(now.minute).zfill(2), encoding_size)
+        now = datetime.now().strftime('%m-%d-%H%M')
+        run_id = RUN_ID_TEMPLATE.format(now, encoding_size)
         log_dir = log_file(run_id)
         data_source = data_file(MATRIX_FILES[1])
 
