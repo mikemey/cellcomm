@@ -4,10 +4,8 @@ DEFAULT_LOG_DIR = 'logs'
 DEFAULT_BATCH_SIZE = 1
 
 FILE_KEY = 'file'
-VALS_KEY = 'values'
 LINES_KEY = 'lines'
 SIZE_KEY = 'size'
-IS_DIRTY_KEY = 'is_dirty'
 
 
 def csv_line(values):
@@ -26,10 +24,8 @@ class DataSink:
 
         self.__graphs[graph_id] = {
             FILE_KEY: f'{self.__log_dir}/{graph_id}.csv',
-            VALS_KEY: [],
             LINES_KEY: [],
-            SIZE_KEY: len(fields),
-            IS_DIRTY_KEY: False,
+            SIZE_KEY: len(fields)
         }
         self.__write_file_line(graph_id, csv_line(fields))
 
@@ -41,12 +37,10 @@ class DataSink:
         if not len(values) == graph_data[SIZE_KEY]:
             raise AssertionError(f'expected {graph_data[SIZE_KEY]} values, received: {values}')
 
-        graph_data[IS_DIRTY_KEY] = True
-        graph_vals, file_lines = graph_data[VALS_KEY], graph_data[LINES_KEY]
-        graph_vals.append(values)
+        file_lines = graph_data[LINES_KEY]
         file_lines.append(csv_line(values))
 
-        if len(graph_vals) >= self.__batch_size:
+        if len(file_lines) >= self.__batch_size:
             self.__drain_graph_data(graph_id)
 
     def drain_data(self):
@@ -55,12 +49,10 @@ class DataSink:
 
     def __drain_graph_data(self, graph_id):
         graph_data = self.__graphs[graph_id]
-        if graph_data[IS_DIRTY_KEY]:
-            graph_data[IS_DIRTY_KEY] = False
-            graph_vals, file_lines = graph_data[VALS_KEY], graph_data[LINES_KEY]
+        if len(graph_data[LINES_KEY]) > 0:
+            file_lines = graph_data[LINES_KEY]
             data = ''.join(file_lines)
             self.__write_file_line(graph_id, data)
-            graph_vals.clear()
             file_lines.clear()
 
     def __write_file_line(self, graph_id, data):
