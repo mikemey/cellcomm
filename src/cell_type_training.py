@@ -7,11 +7,11 @@ from bigan_cont import ContinuousCellBiGan
 
 
 def load_matrix(file):
+    print(f'============ Loading {file}...')
     df = pd.read_csv(file, header=None, skiprows=3,
                      delim_whitespace=True, names=['gene', 'barcode', 'p'])
     df = df.pivot_table(index='barcode', columns='gene', values='p', fill_value=0)
-    print(f'============ Loaded {file}')
-    print(f'============ barcodes: {df.shape[0]}, genes: {df.shape[1]}')
+    print(f'============ DONE! barcodes: {df.shape[0]}, genes: {df.shape[1]}')
     print('=' * 80)
     return df
 
