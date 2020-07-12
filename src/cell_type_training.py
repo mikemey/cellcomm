@@ -3,6 +3,7 @@ from typing import Callable, Any
 import pandas as pd
 
 from bigan_classify import ClassifyCellBiGan
+from bigan_cont import ContinuousCellBiGan
 
 
 def load_matrix(file):
@@ -16,10 +17,11 @@ def load_matrix(file):
 
 
 class CellTraining:
-    def __init__(self, matrix_file, batch_size, encoding_size):
+    def __init__(self, data, batch_size, encoding_size):
         self.batch_size = batch_size
-        self.data = load_matrix(matrix_file)
-        self.network = ClassifyCellBiGan(encoding_size, gene_size=self.data.shape[1])
+        self.data = data
+        self.network = ContinuousCellBiGan(encoding_size, gene_size=self.data.shape[1])
+        # self.network = ClassifyCellBiGan(encoding_size, gene_size=self.data.shape[1])
 
     def _sample_cell_data(self, random_seed=None):
         return self.data.sample(self.batch_size, random_state=random_seed)

@@ -1,11 +1,9 @@
 import os
 import pathlib
+from datetime import datetime
 
-import sklearn.manifold as skm
-import umap
-
-from cell_type_training import *
-from training_interceptors import *
+from cell_type_training import CellTraining, load_matrix
+from training_interceptors import ParamInterceptors, combined_interceptor
 
 
 def data_file(data_file_):
@@ -31,11 +29,6 @@ def create_interceptors(log_dir_, run_id_, trainer_):
         ics.print_losses,
         ics.log_losses,
         ics.plot_clusters_on_data(trainer_),
-        # ics.plot(trainer, reduction_algo=skm.Isomap(n_components=4, n_jobs=-1)),
-        # ics.plot(trainer, reduction_algo=skc.PCA(n_components=3, random_state=0), name='_3d'),
-        # ics.plot(trainer_, reduction_algo=skm.TSNE(n_components=3, n_jobs=-1, random_state=0), name='_3d', skip_steps=10),
-        # ics.plot_rotate(trainer_, reduction_algo=umap.UMAP(n_components=3, random_state=0), skip_steps=1),
-        # ics.plot(trainer_, reduction_algo=umap.UMAP(n_components=4, random_state=0), name='_4d', skip_steps=1),
         lambda _, __: print('-|')
     ])
 
@@ -54,7 +47,7 @@ if __name__ == '__main__':
         now = datetime.now().strftime('%m-%d-%H%M')
         run_id = RUN_ID_TEMPLATE.format(now, str(encoding_size).zfill(2))
         log_dir = log_file(run_id)
-        data_source = data_file(MATRIX_FILES[1])
+        data_source = load_matrix(data_file(MATRIX_FILES[1]))
 
         check_log_dir(log_dir)
         trainer = CellTraining(data_source, batch_size=128, encoding_size=encoding_size)

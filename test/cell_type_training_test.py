@@ -22,12 +22,12 @@ TEST_MATRIX_CONTENT = [
 
 class CellTrainingTestCase(TFTestCase):
     def setUp(self):
-        self.trainer = CellTraining(TEST_TRAINING_FILE, TEST_BATCH_SIZE, TEST_ENCODING_SIZE)
+        self.cell_batch = load_matrix(TEST_TRAINING_FILE)
+        self.trainer = CellTraining(self.cell_batch, TEST_BATCH_SIZE, TEST_ENCODING_SIZE)
 
     def test_load_matrix_and_pivot(self):
-        cell_batch = load_matrix(TEST_TRAINING_FILE)
-        self.assertEqual((5, TEST_GENE_COUNT), cell_batch.shape)
-        self.assertDeepEqual(TEST_MATRIX_CONTENT, cell_batch)
+        self.assertEqual((5, TEST_GENE_COUNT), self.cell_batch.shape)
+        self.assertDeepEqual(TEST_MATRIX_CONTENT, self.cell_batch)
 
     def test_sample_cell_data(self):
         sampled = self.trainer._sample_cell_data(0)
