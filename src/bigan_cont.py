@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow.keras import Model, layers, losses
+from tensorflow.keras import Model, layers, losses, utils
 
 from bigan_classify import ClassifyCellBiGan
 
@@ -49,3 +49,6 @@ class ContinuousCellBiGan(ClassifyCellBiGan):
 
     def _get_encoding_vector(self, batch_size):
         return tf.random.uniform(shape=(batch_size, self.encoding_size), minval=0, maxval=1)
+
+    def encode_genes(self, cell_data):
+        return self._encoder.predict(cell_data)

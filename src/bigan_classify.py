@@ -104,12 +104,10 @@ class ClassifyCellBiGan:
     def _set_trainings_mode(self, mode):
         self._generator.trainable, self._encoder.trainable, self._discriminator.trainable = mode
 
-    def encode_genes(self, cell_data, to_hot_vector=True):
+    def encode_genes(self, cell_data):
         prediction = self._encoder.predict(cell_data)
-        if to_hot_vector:
-            argmax = tf.math.argmax(prediction, -1)
-            prediction = utils.to_categorical(argmax, num_classes=self.encoding_size)
-        return prediction
+        argmax = tf.math.argmax(prediction, -1)
+        return utils.to_categorical(argmax, num_classes=self.encoding_size)
 
     def generate_cells(self, z):
         prediction = self._generator.predict(z)

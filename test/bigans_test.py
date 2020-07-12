@@ -135,7 +135,6 @@ class ClassifyBiGanTestCase(TFTestCase):
         test_hot_enc = [[0, 1], [1, 0], [0, 1]]
         bigan._encoder.predict = predict_mock = MagicMock(return_value=test_prediction)
 
-        self.assertDeepEqual(test_prediction, bigan.encode_genes(test_genes, to_hot_vector=False))
         self.assertDeepEqual(test_hot_enc, bigan.encode_genes(test_genes))
         predict_mock.assert_called_with(test_genes)
 
@@ -167,3 +166,12 @@ class ContinuousBiGanTestCase(TFTestCase):
             self.assertEqual((3, 20), cell_encoding.shape)
             self.assertTrue(np.all(cell_encoding > 0), f'cell_encoding with values < 0:\n{cell_encoding}')
             self.assertTrue(np.all(cell_encoding < 1), f'cell_encoding with values > 1:\n{cell_encoding}')
+
+    def test_encode_genes(self):
+        bigan = ContinuousCellBiGan(encoding_size=2, gene_size=4)
+        test_genes = [[5, 3, 1, 4], [1, 5, 13, 7]]
+        test_prediction = [[0.1, 0.3], [0.7, 0.3], [0.001, 0.99]]
+        bigan._encoder.predict = predict_mock = MagicMock(return_value=test_prediction)
+
+        self.assertDeepEqual(test_prediction, bigan.encode_genes(test_genes))
+        predict_mock.assert_called_with(test_genes)

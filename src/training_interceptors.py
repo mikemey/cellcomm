@@ -56,7 +56,7 @@ class ParamInterceptors:
 
         def create_plot(it, losses):
             print(f'--|-- {algo_name}... ', end='', flush=True)
-            all_encodings = trainer_.network.encode_genes(trainer_.data, to_hot_vector=False)
+            all_encodings = trainer_.network.encode_genes(trainer_.data)
             points = reduction_algo.fit_transform(all_encodings)
             fig = create_default_figure(full_id, it, losses)
 
@@ -95,7 +95,7 @@ class ParamInterceptors:
         def intercept(it, losses):
             if (it % skip_steps) >= (skip_steps - 1):
                 print(f'--|-- {algo_name}... ', end='', flush=True)
-                all_encodings = trainer_.network.encode_genes(trainer_.data, to_hot_vector=False)
+                all_encodings = trainer_.network.encode_genes(trainer_.data)
                 points = reduction_algo.fit_transform(all_encodings)
                 for p_ix, p_position in enumerate(rot_ixs):
                     title = f'{full_id}_pos{p_ix}'
@@ -116,7 +116,7 @@ class ParamInterceptors:
 
         def intercept(it, losses):
             if (it % skip_steps) >= (skip_steps - 1):
-                all_encodings = trainer_.network.encode_genes(trainer_.data, to_hot_vector=False)
+                all_encodings = trainer_.network.encode_genes(trainer_.data)
                 all_color_points = [run_fit_transform(*a_meta, all_encodings) for a_meta in algo_metas]
 
                 for a_meta, xy_points, color_points in zip(algo_metas, all_2d_points, all_color_points):
@@ -131,7 +131,7 @@ class ParamInterceptors:
 
     def plot_encodings_directly(self, trainer_):
         def intercept(it, losses):
-            encodings = trainer_.network.encode_genes(trainer_.data, to_hot_vector=False)
+            encodings = trainer_.network.encode_genes(trainer_.data)
             c_dim = np.shape(encodings)[1]
             coords = np.multiply(encodings, 255)
 
