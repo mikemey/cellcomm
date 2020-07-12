@@ -116,8 +116,8 @@ class ClassifyCellBiGan:
     def trainings_step(self, sampled_batch):
         batch_size = len(sampled_batch)
         z = self._get_encoding_vector(batch_size)
-        y_ones = tf.repeat(0.9, batch_size)
-        y_zeros = tf.repeat(0.1, batch_size)
+        y_ones = tf.repeat(0.95, batch_size)
+        y_zeros = tf.zeros(batch_size)
 
         g_loss = self.__train_generator(z, y_ones)
         e_loss = self.__train_encoder(sampled_batch, y_zeros)
