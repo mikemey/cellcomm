@@ -6,13 +6,23 @@ from bigan_classify import ClassifyCellBiGan
 from bigan_cont import ContinuousCellBiGan
 
 
-def load_matrix(file):
-    print(f'============ Loading {file}...')
-    df = pd.read_csv(file, header=None, skiprows=3,
+def load_matrix(matrix_file, verbose=False):
+    if verbose:
+        print(f'============ Loading {matrix_file}...')
+    df = pd.read_csv(matrix_file, header=None, skiprows=3,
                      delim_whitespace=True, names=['gene', 'barcode', 'p'])
     df = df.pivot_table(index='barcode', columns='gene', values='p', fill_value=0)
-    print(f'============ DONE! barcodes: {df.shape[0]}, genes: {df.shape[1]}')
-    print('=' * 80)
+    if verbose:
+        print(f'============ DONE! barcodes: {df.shape[0]}, genes: {df.shape[1]}')
+    return df
+
+
+def load_cells(cells_file, verbose=False):
+    if verbose:
+        print(f'============ Loading {cells_file}...')
+    df = pd.read_csv(cells_file, index_col=0)
+    if verbose:
+        print(f'============ DONE! barcodes: {df.shape[0]}, genes: {df.shape[1]}')
     return df
 
 

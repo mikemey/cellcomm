@@ -1,12 +1,13 @@
 import os
 from unittest.mock import MagicMock
 
-from cell_type_training import load_matrix, CellTraining
+from cell_type_training import load_matrix, load_cells, CellTraining
 from tf_testcase import TFTestCase
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '5'
 
-TEST_TRAINING_FILE = os.path.join(os.path.dirname(__file__), 'example_matrix.mtx')
+TEST_MATRIX_FILE = os.path.join(os.path.dirname(__file__), 'example_matrix.mtx')
+TEST_CELLS_FILE = os.path.join(os.path.dirname(__file__), 'example_cells.cell')
 TEST_BATCH_SIZE = 3
 TEST_GENE_COUNT = 11
 TEST_ENCODING_SIZE = 8
@@ -22,12 +23,17 @@ TEST_MATRIX_CONTENT = [
 
 class CellTrainingTestCase(TFTestCase):
     def setUp(self):
-        self.cell_batch = load_matrix(TEST_TRAINING_FILE)
+        self.cell_batch = load_matrix(TEST_MATRIX_FILE)
         self.trainer = CellTraining(self.cell_batch, TEST_BATCH_SIZE, TEST_ENCODING_SIZE)
 
     def test_load_matrix_and_pivot(self):
         self.assertEqual((5, TEST_GENE_COUNT), self.cell_batch.shape)
         self.assertDeepEqual(TEST_MATRIX_CONTENT, self.cell_batch)
+
+    def test_load_cell_file(self):
+        cell_data = load_cells(TEST_CELLS_FILE)
+        self.assertEqual((5, TEST_GENE_COUNT), cell_data.shape)
+        self.assertDeepEqual(TEST_MATRIX_CONTENT, cell_data)
 
     def test_sample_cell_data(self):
         sampled = self.trainer._sample_cell_data(0)
