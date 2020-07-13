@@ -1,3 +1,6 @@
+from abc import abstractmethod
+from typing import final
+
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import Model, layers, optimizers, losses, utils
@@ -56,32 +59,50 @@ def _build_discriminator(encoding_size, gene_size):
     return Model([encoding_in, cell_in], prob, name='cell_discriminator')
 
 
-class ClassifyCellBiGan:
+class BasicBiGan:
     TRAIN_GENERATOR = (True, False, False)
     TRAIN_ENCODER = (False, True, False)
     TRAIN_DISCRIMINATOR = (False, False, True)
 
-    def __init__(
-            self, encoding_size, gene_size,
-            generator_factory=_build_generator,
-            gen_optimizer=optimizers.Adam(),
-            gen_loss=losses.binary_crossentropy,
-
-            encoder_factory=_build_encoder,
-            enc_optimizer=optimizers.Adam(),
-            enc_loss=losses.binary_crossentropy,
-
-            discriminator_factory=_build_discriminator,
-            discr_optimizer=optimizers.Adam(),
-            discr_loss=losses.binary_crossentropy
-    ):
+    def __init__(self, encoding_size, gene_size,
+                 generator_factory, encoder_factory, discriminator_factory):
         self.encoding_size = encoding_size
         self._generator = generator_factory(encoding_size, gene_size)
-        self._generator.compile(optimizer=gen_optimizer, loss=gen_loss)
         self._encoder = encoder_factory(encoding_size, gene_size)
-        self._encoder.compile(optimizer=enc_optimizer, loss=enc_loss)
-
         self._discriminator = discriminator_factory(encoding_size, gene_size)
+
+    @final
+    def summary(self):
+        self._generator.summary()
+        self._encoder.summary()
+        self._discriminator.summary()
+
+    @final
+    def encoding_prediction(self, cell_data):
+        return self._encoder.predict(cell_data)
+
+    @final
+    def cell_prediction(self, gen_input):
+        prediction = self._generator.predict(gen_input)
+        return tf.math.round(prediction)
+
+    @final
+    def _set_trainings_mode(self, mode):
+        self._generator.trainable, self._encoder.trainable, self._discriminator.trainable = mode
+
+    @abstractmethod
+    def trainings_step(self, sampled_batch):
+        pass
+
+
+class ClassifyCellBiGan(BasicBiGan):
+    def __init__(self, encoding_size, gene_size,
+                 generator_factory=_build_generator,
+                 encoder_factory=_build_encoder,
+                 discriminator_factory=_build_discriminator):
+        super().__init__(encoding_size, gene_size, generator_factory, encoder_factory, discriminator_factory)
+        discr_optimizer = optimizers.Adam(),
+        discr_loss = losses.binary_crossentropy
         self._discriminator.compile(optimizer=discr_optimizer, loss=discr_loss)
 
         gen_output = self._discriminator((self._generator.input, self._generator.output))
@@ -92,26 +113,14 @@ class ClassifyCellBiGan:
         self._encoder_train_model = Model(self._encoder.inputs, enc_output, name='encoder-trainings-model')
         self._encoder_train_model.compile(optimizer=discr_optimizer, loss=discr_loss)
 
-    def summary(self):
-        self._generator.summary()
-        self._encoder.summary()
-        self._discriminator.summary()
-
     def _get_encoding_vector(self, batch_size):
         rand_ixs = np.random.randint(0, self.encoding_size, batch_size)
         return tf.keras.utils.to_categorical(rand_ixs, self.encoding_size)
 
-    def _set_trainings_mode(self, mode):
-        self._generator.trainable, self._encoder.trainable, self._discriminator.trainable = mode
-
-    def encode_genes(self, cell_data):
-        prediction = self._encoder.predict(cell_data)
+    def trainings_encoding_prediction(self, cell_data):
+        prediction = self.encoding_prediction(cell_data)
         argmax = tf.math.argmax(prediction, -1)
         return utils.to_categorical(argmax, num_classes=self.encoding_size)
-
-    def generate_cells(self, z):
-        prediction = self._generator.predict(z)
-        return tf.math.round(prediction)
 
     def trainings_step(self, sampled_batch):
         batch_size = len(sampled_batch)
@@ -123,8 +132,8 @@ class ClassifyCellBiGan:
         e_loss = self.__train_encoder(sampled_batch, y_zeros)
 
         z = self._get_encoding_vector(batch_size)
-        d_loss_1 = self.__train_discriminator(z, self.generate_cells(z), y_zeros)
-        d_loss_2 = self.__train_discriminator(self.encode_genes(sampled_batch), sampled_batch, y_ones)
+        d_loss_1 = self.__train_discriminator(z, self.cell_prediction(z), y_zeros)
+        d_loss_2 = self.__train_discriminator(self.trainings_encoding_prediction(sampled_batch), sampled_batch, y_ones)
         d_loss = np.mean([d_loss_1, d_loss_2])
         return g_loss, e_loss, d_loss
 

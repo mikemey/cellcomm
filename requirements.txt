@@ -5,3 +5,4 @@ Pillow==7.1.2
 matplotlib==3.2.2
 scikit-learn==0.23.1
 umap-learn==0.4.6
+pytest==5.4.3
