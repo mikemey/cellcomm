@@ -4,7 +4,7 @@ from datetime import datetime
 
 import sys
 
-from cell_type_training import CellTraining, load_matrix
+from cell_type_training import CellTraining, load_matrix, load_cells
 from training_interceptors import ParamInterceptors, combined_interceptor
 
 
@@ -22,6 +22,14 @@ MATRIX_FILES = [
     'GSE122930_Sham_1_week_matrix.mtx',
     'GSE122930_Sham_4_weeks_repA+B_matrix.mtx',
     'GSE122930_TAC_4_weeks_small_sample.mtx'
+]
+
+CELL_FILES = [
+    'GSE122930_TAC_1_week.cell',
+    'GSE122930_TAC_4_weeks.cell',
+    'GSE122930_Sham_1_week.cell',
+    'GSE122930_Sham_4_weeks.cell',
+    'GSE122930_TAC_4_weeks_small.cell'
 ]
 
 
@@ -45,25 +53,26 @@ def check_log_dir(log_dir_):
 
 RUN_ID_TEMPLATE = '{}-TAC4-direct-enc_{}'
 
-default_source_file = data_file(MATRIX_FILES[1])
 
-
-def run_training(data_source):
+def run_training(cell_file=CELL_FILES[1], batch_size=128):
+    data_source = load_cells(data_file(cell_file), verbose=True)
     for encoding_size in range(3, 4):
         now = datetime.now().strftime('%m-%d-%H%M')
         run_id = RUN_ID_TEMPLATE.format(now, encoding_size)
         log_dir = log_file(run_id)
 
         check_log_dir(log_dir)
-        trainer = CellTraining(data_source, batch_size=128, encoding_size=encoding_size)
+        trainer = CellTraining(data_source, batch_size=batch_size, encoding_size=encoding_size)
         interceptors = create_interceptors(log_dir, run_id, trainer)
         trainer.run(300, interceptor=interceptors)
 
 
 def store_converted_cell_file(matrix_file, cell_file):
     print('converting matrix file:')
-    df = load_matrix(matrix_file)
+    df = load_matrix(matrix_file, verbose=True)
+    print('storing cell file:', cell_file, '... ', end='', flush=True)
     df.to_csv(cell_file)
+    print('done')
 
 
 if __name__ == '__main__':
@@ -75,4 +84,4 @@ if __name__ == '__main__':
         else:
             print('unrecognised command:', cmd)
     else:
-        run_training(load_matrix(default_source_file))
+        run_training()
