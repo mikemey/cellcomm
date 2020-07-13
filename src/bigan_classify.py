@@ -1,3 +1,5 @@
+from typing import Callable
+
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import Model, layers, optimizers, losses, utils
@@ -60,23 +62,25 @@ def _build_discriminator(encoding_size, gene_size):
 
 class ClassifyCellBiGan(BasicBiGan):
     def __init__(self, encoding_size, gene_size,
-                 generator_factory=_build_generator,
-                 encoder_factory=_build_encoder,
-                 discriminator_factory=_build_discriminator):
+                 generator_factory: Callable[[int, int], Model] = _build_generator,
+                 encoder_factory: Callable[[int, int], Model] = _build_encoder,
+                 discriminator_factory: Callable[[int, int], Model] = _build_discriminator):
         super().__init__(encoding_size, gene_size, generator_factory, encoder_factory, discriminator_factory)
         discr_optimizer = optimizers.Adam()
         discr_loss = losses.binary_crossentropy
-        self._discriminator.compile(optimizer=discr_optimizer, loss=discr_loss)
 
-        # self._discriminator.trainable = False
+        self._discriminator.trainable = False
         gen_output = self._discriminator((self._generator.input, self._generator.output))
         self._generator_train_model = Model(self._generator.inputs, gen_output, name='generator-trainings-model')
         self._generator_train_model.compile(optimizer=discr_optimizer, loss=discr_loss)
 
-        # self._discriminator.trainable = False
+        self._discriminator.trainable = False
         enc_output = self._discriminator((self._encoder.output, self._encoder.input))
         self._encoder_train_model = Model(self._encoder.inputs, enc_output, name='encoder-trainings-model')
         self._encoder_train_model.compile(optimizer=discr_optimizer, loss=discr_loss)
+
+        self._discriminator.trainable = True
+        self._discriminator.compile(optimizer=discr_optimizer, loss=discr_loss)
 
     def _get_encoding_vector(self, batch_size):
         rand_ixs = np.random.randint(0, self.encoding_size, batch_size)
@@ -89,59 +93,25 @@ class ClassifyCellBiGan(BasicBiGan):
 
     def trainings_step(self, sampled_batch):
         batch_size = len(sampled_batch)
-        z = self._get_encoding_vector(batch_size)
         y_ones = tf.repeat(0.95, batch_size)
         y_zeros = tf.zeros(batch_size)
 
-        orig_p = self.last_layer_params()
-        self.compare_params('       before gen train --- ', orig_p)
+        z = self._get_encoding_vector(batch_size)
         g_loss = self.__train_generator(z, y_ones)
-        self.compare_params('        after gen train --- ', orig_p)
-        orig_p = self.last_layer_params()
-
         e_loss = self.__train_encoder(sampled_batch, y_zeros)
-        self.compare_params('        after enc train --- ', orig_p)
-        orig_p = self.last_layer_params()
 
         z = self._get_encoding_vector(batch_size)
         d_loss_1 = self.__train_discriminator(z, self.cell_prediction(z), y_zeros)
-        self.compare_params('  after disc fake train --- ', orig_p)
-        orig_p = self.last_layer_params()
         d_loss_2 = self.__train_discriminator(self.trainings_encoding_prediction(sampled_batch), sampled_batch, y_ones)
-        self.compare_params('  after disc real train --- ', orig_p)
-
         d_loss = np.mean([d_loss_1, d_loss_2])
+
         return g_loss, e_loss, d_loss
 
-    def compare_params(self, msg, prev_params):
-        def components_changed(p_now, p_orig):
-            w_now, b_now = p_now
-            w_orig, b_orig = p_orig
-            w_matrix = tf.math.equal(w_now, w_orig)
-            b_matrix = tf.math.equal(b_now, b_orig)
-            return not (np.all(w_matrix) and np.all(b_matrix))
-
-        curr_params = self.last_layer_params()
-        changed = [components_changed(p_now, p_orig) for p_now, p_orig in zip(curr_params, prev_params)]
-        print(msg, 'G|E|D changed:', f'{changed[0]:1} | {changed[1]:1} | {changed[2]:1},')
-
-    def last_layer_params(self):
-        return [l.layers[-1].get_weights() for l in self.all_components()]
-
-    def comp_trainable(self):
-        return [comp.trainable for comp in self.all_components()]
-
-    def all_components(self):
-        return self._generator, self._encoder, self._discriminator
-
     def __train_generator(self, encoding, target):
-        # self._set_trainings_mode(self.TRAIN_GENERATOR)
         return self._generator_train_model.train_on_batch(encoding, target)
 
     def __train_encoder(self, cell_data, target):
-        # self._set_trainings_mode(self.TRAIN_ENCODER)
         return self._encoder_train_model.train_on_batch(cell_data, target)
 
     def __train_discriminator(self, encoding, cell_data, target):
-        # self._set_trainings_mode(self.TRAIN_DISCRIMINATOR)
         return self._discriminator.train_on_batch((encoding, cell_data), target)

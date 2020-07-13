@@ -22,21 +22,6 @@ class BasicBiGanTestCase(TFTestCase):
         self.assertEqual(self.gen_mock, self.bigan._generator)
         self.assertEqual(self.discr_mock, self.bigan._discriminator)
 
-    def test_training_modes(self):
-        def assert_trainings_mode(gen, enc, discr):
-            self.assertEqual(gen, self.gen_mock.trainable)
-            self.assertEqual(enc, self.enc_mock.trainable)
-            self.assertEqual(discr, self.discr_mock.trainable)
-
-        self.bigan._set_trainings_mode(BasicBiGan.TRAIN_GENERATOR)
-        assert_trainings_mode(True, False, False)
-
-        self.bigan._set_trainings_mode(BasicBiGan.TRAIN_ENCODER)
-        assert_trainings_mode(False, True, False)
-
-        self.bigan._set_trainings_mode(BasicBiGan.TRAIN_DISCRIMINATOR)
-        assert_trainings_mode(False, False, True)
-
     def test_encoding_prediction(self):
         test_genes = [[5, 3, 1, 4], [1, 5, 13, 7]]
         test_prediction = [[0.1, 0.3], [0.7, 0.3], [0.001, 0.99]]

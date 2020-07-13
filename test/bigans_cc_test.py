@@ -74,7 +74,6 @@ class ClassifyBiGanTestCase(TFTestCase):
         sampled_batch = DataFrame([[14, 15]] * test_batch_size)
 
         bigan = ClassifyCellBiGan(encoding_size=1, gene_size=2)
-        bigan._set_trainings_mode = trainings_mode_mock = MagicMock()
         bigan._get_encoding_vector = get_encoding_mock = MagicMock(return_value=rnd_encodings)
         bigan._generator_train_model.train_on_batch = gen_train_mock = MagicMock(return_value='g-loss')
         bigan._encoder_train_model.train_on_batch = enc_train_mock = MagicMock(return_value='e-loss')
@@ -88,11 +87,6 @@ class ClassifyBiGanTestCase(TFTestCase):
         test_losses = bigan.trainings_step(sampled_batch)
         self.assertEqual(('g-loss', 'e-loss', 4), test_losses)
 
-        trainings_mode_mock.assert_has_calls([
-            call(ClassifyCellBiGan.TRAIN_GENERATOR),
-            call(ClassifyCellBiGan.TRAIN_ENCODER),
-            call(ClassifyCellBiGan.TRAIN_DISCRIMINATOR)]
-        )
         self.assertEqual(2, get_encoding_mock.call_count)
         get_encoding_mock.assert_called_with(test_batch_size)
 
