@@ -4,7 +4,7 @@ from datetime import datetime
 
 import sys
 
-from cell_type_training import CellTraining, load_matrix, load_cells
+from cell_type_training import CellTraining, load_matrix
 from training_interceptors import ParamInterceptors, combined_interceptor
 
 
@@ -54,8 +54,8 @@ def check_log_dir(log_dir_):
 RUN_ID_TEMPLATE = '{}-TAC4-direct-enc_{}'
 
 
-def run_training(cell_file=CELL_FILES[1], batch_size=128):
-    data_source = load_cells(data_file(cell_file), verbose=True)
+def run_training(source_file=MATRIX_FILES[4], batch_size=3):
+    data_source = load_matrix(data_file(source_file), verbose=True)
     for encoding_size in range(3, 4):
         now = datetime.now().strftime('%m-%d-%H%M')
         run_id = RUN_ID_TEMPLATE.format(now, encoding_size)
