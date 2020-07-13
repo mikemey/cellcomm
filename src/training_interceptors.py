@@ -34,18 +34,22 @@ class ParamInterceptors:
     def __init__(self, log_dir, run_id):
         self.log_dir = log_dir
         self.run_id = run_id
-        self.sink = DataSink(log_dir=self.log_dir)
-        self.sink.add_graph_header(LOSSES_ID, ['iteration', 'total-loss', 'g-loss', 'e-loss', 'd-loss'])
-        atexit.register(self.sink.drain_data)
 
     def print_losses(self, it, all_losses):
         g_loss, e_loss, d_loss = all_losses
         ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         print(f'[{ts}] {self.run_id} it: {it:6}  TOT: {sum(all_losses):6.3f}  G-L: {g_loss:6.3f}  E-L: {e_loss:6.3f}  D-L: {d_loss:6.3f}')
 
-    def log_losses(self, it, all_losses):
-        g_loss, e_loss, d_loss = all_losses
-        self.sink.add_data(LOSSES_ID, [it, sum(all_losses), g_loss, e_loss, d_loss])
+    def log_losses(self):
+        sink = DataSink(log_dir=self.log_dir)
+        sink.add_graph_header(LOSSES_ID, ['iteration', 'total-loss', 'g-loss', 'e-loss', 'd-loss'])
+        atexit.register(sink.drain_data)
+
+        def store_record(it, all_losses):
+            g_loss, e_loss, d_loss = all_losses
+            sink.add_data(LOSSES_ID, [it, sum(all_losses), g_loss, e_loss, d_loss])
+
+        return store_record
 
     def __figure_path(self, title, iteration):
         return f'{self.log_dir}/{title}_{str(iteration).zfill(4)}.png'

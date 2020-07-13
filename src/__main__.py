@@ -37,7 +37,7 @@ def create_interceptors(log_dir_, run_id_, trainer_):
     ics = ParamInterceptors(log_dir_, run_id_)
     return combined_interceptor([
         ics.print_losses,
-        # ics.log_losses,
+        ics.log_losses(),
         # ics.plot_clusters_on_data(trainer_),
         # ics.plot_encodings_directly(trainer_),
         # lambda _, __: print('-|')
