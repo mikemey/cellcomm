@@ -65,7 +65,7 @@ def run_training(source_file=MATRIX_FILES[1], batch_size=128):
         trainer = CellTraining(data_source, batch_size=batch_size, encoding_size=encoding_size)
         # trainer.network.summary()
         interceptors = create_interceptors(log_dir, run_id, trainer)
-        trainer.run(200, interceptor=interceptors)
+        trainer.run(300, interceptor=interceptors)
 
 
 def store_converted_cell_file(matrix_file, cell_file):

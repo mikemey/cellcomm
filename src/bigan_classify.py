@@ -50,12 +50,9 @@ def _build_discriminator(encoding_size, gene_size):
     x = layers.Concatenate()([x, x2, encoding_in])
     x = layers.Dropout(0.15)(x)
     x = layers.Dense(256, activation=tf.nn.sigmoid)(x)
-    x = layers.Dropout(0.15)(x)
-    x = layers.Concatenate()([x, encoding_in])
-    x = layers.Dense(256, activation=tf.nn.sigmoid)(x)
     summary_enc = layers.Dense(256, activation=tf.nn.sigmoid)(x)
 
-    l_widths = [int(gene_size * f) for f in [0.3, 0.2, 0.1]]
+    l_widths = [int(gene_size * f) for f in [0.25, 0.1]]
     x = layers.Dense(l_widths[0], activation=tf.nn.sigmoid)(cell_in)
     x = layers.Dropout(0.15)(x)
     x = layers.Concatenate()([x, cell_in])
@@ -70,10 +67,10 @@ def _build_discriminator(encoding_size, gene_size):
     combined_summaries = layers.Concatenate()([summary_enc, summary_gene])
     combined_in = layers.Concatenate()([encoding_in, cell_in])
     x = layers.Concatenate()([combined_summaries, combined_in])
-    x = layers.Dense(l_widths[1], activation=tf.nn.sigmoid)(x)
+    x = layers.Dense(l_widths[0], activation=tf.nn.sigmoid)(x)
     x = layers.Dropout(0.15)(x)
     x = layers.Concatenate()([x, combined_summaries])
-    x = layers.Dense(l_widths[2], activation=tf.nn.sigmoid)(x)
+    x = layers.Dense(l_widths[1], activation=tf.nn.sigmoid)(x)
     x = layers.BatchNormalization()(x)
     x = layers.Dropout(0.15)(x)
     x = layers.Dense(50, activation=tf.nn.sigmoid)(x)
