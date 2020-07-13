@@ -12,19 +12,6 @@ from tf_testcase import TFTestCase
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '5'
 
-TEST_TRAINING_FILE = os.path.join(os.path.dirname(__file__), 'example_matrix.mtx')
-TEST_BATCH_SIZE = 3
-TEST_GENE_COUNT = 11
-TEST_ENCODING_SIZE = 8
-TEST_MATRIX_CONTENT = [
-    # gene: 32, 34, 39, 40, 60, 63, 23764, 27918, 27919, 27921, 27994
-    [0, 0, 0, 0, 1, 11, 0, 0, 0, 6, 1],
-    [0, 1, 0, 1, 0, 0, 0, 4, 0, 6, 0],
-    [1, 1, 1, 1, 0, 0, 0, 0, 1, 6, 0],
-    [0, 0, 0, 0, 0, 0, 0, 1, 1, 14, 0],
-    [0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0],
-]
-
 
 class ClassifyBiGanTestCase(TFTestCase):
     def test_generator_train_model(self):
@@ -82,8 +69,9 @@ class ClassifyBiGanTestCase(TFTestCase):
         self.assertEqual((None, 1), enc_train_model.output_shape)
 
     def test_training_step(self):
-        rnd_encodings = tf.constant([[0.123] * TEST_BATCH_SIZE])
-        sampled_batch = DataFrame([[14, 15]] * TEST_BATCH_SIZE)
+        test_batch_size = 3
+        rnd_encodings = tf.constant([[0.123] * test_batch_size])
+        sampled_batch = DataFrame([[14, 15]] * test_batch_size)
 
         bigan = ClassifyCellBiGan(encoding_size=1, gene_size=2)
         bigan._set_trainings_mode = trainings_mode_mock = MagicMock()
@@ -91,14 +79,14 @@ class ClassifyBiGanTestCase(TFTestCase):
         bigan._generator_train_model.train_on_batch = gen_train_mock = MagicMock(return_value='g-loss')
         bigan._encoder_train_model.train_on_batch = enc_train_mock = MagicMock(return_value='e-loss')
 
-        gen_prediction = tf.constant([[10, 11]] * TEST_BATCH_SIZE)
-        enc_prediction = tf.constant([[2]] * TEST_BATCH_SIZE)
+        gen_prediction = tf.constant([[10, 11]] * test_batch_size)
+        enc_prediction = tf.constant([[2]] * test_batch_size)
         bigan.cell_prediction = gen_cells_mock = MagicMock(return_value=gen_prediction)
         bigan.trainings_encoding_prediction = train_encoding_mock = MagicMock(return_value=enc_prediction)
         bigan._discriminator.train_on_batch = discr_train_mock = MagicMock(side_effect=[3, 5])
 
-        losses = bigan.trainings_step(sampled_batch)
-        self.assertEqual(('g-loss', 'e-loss', 4), losses)
+        test_losses = bigan.trainings_step(sampled_batch)
+        self.assertEqual(('g-loss', 'e-loss', 4), test_losses)
 
         trainings_mode_mock.assert_has_calls([
             call(ClassifyCellBiGan.TRAIN_GENERATOR),
@@ -106,13 +94,13 @@ class ClassifyBiGanTestCase(TFTestCase):
             call(ClassifyCellBiGan.TRAIN_DISCRIMINATOR)]
         )
         self.assertEqual(2, get_encoding_mock.call_count)
-        get_encoding_mock.assert_called_with(TEST_BATCH_SIZE)
+        get_encoding_mock.assert_called_with(test_batch_size)
 
         def assert_mock_calls(mock, args):
             for ix, m_arg in enumerate(args):
                 self.assertDeepEqual(m_arg, mock.call_args[0][ix])
 
-        y_gen, y_enc = tf.repeat(0.95, TEST_BATCH_SIZE), tf.repeat(0., TEST_BATCH_SIZE)
+        y_gen, y_enc = tf.repeat(0.95, test_batch_size), tf.repeat(0., test_batch_size)
         assert_mock_calls(gen_train_mock, args=(rnd_encodings, y_gen))
         assert_mock_calls(enc_train_mock, args=(sampled_batch, y_enc))
         assert_mock_calls(gen_cells_mock, args=(rnd_encodings,))
