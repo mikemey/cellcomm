@@ -12,6 +12,8 @@ from tensorflow.python.keras import backend
 
 from support.data_sink import DataSink
 
+POINTS_SIZE = 0.3
+
 
 def combined_interceptor(interceptors):
     def call_all(it, all_losses):
@@ -22,7 +24,7 @@ def combined_interceptor(interceptors):
 
 
 def create_default_figure(title, it, losses):
-    plt.rc('lines', markersize=2)
+    plt.rc('lines', markersize=POINTS_SIZE)
 
     fig = plt.figure(figsize=(12, 8))
     fig.suptitle(f'{title} {it:6}, L: {sum(losses):6.3f}', fontsize=12)
@@ -75,7 +77,7 @@ class ParamInterceptors:
                 fig.tight_layout()
             if np.shape(points)[1] == 4:
                 ax = Axes3D(fig)
-                ax.scatter(points[:, 0], points[:, 1], points[:, 2], c=points[:, 3])
+                ax.scatter(points[:, 0], points[:, 1], points[:, 2], c=points[:, 3], s=POINTS_SIZE)
             return fig
 
         def intercept(it, losses):
@@ -139,10 +141,10 @@ class ParamInterceptors:
     def plot_encodings_directly(self, trainer_):
         def intercept(it, losses):
             encodings = trainer_.network.encoding_prediction(trainer_.data)
-            c_dim = np.shape(encodings)[1]
+            enc_dim = np.shape(encodings)[1]
             coords = np.multiply(encodings, 255)
 
-            if c_dim == 3:
+            if enc_dim == 3:
                 title = f'{self.run_id}_2Dc'
                 fig = create_default_figure(title, it, losses)
                 for ax in fig.axes:
@@ -159,18 +161,18 @@ class ParamInterceptors:
                 ax.set_xlim3d(0, 255)
                 ax.set_ylim3d(0, 255)
                 ax.set_zlim3d(0, 255)
-                ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2])
+                ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2], s=POINTS_SIZE)
                 fig.savefig(self.__figure_path(title, it))
                 plt.close(fig)
 
-            if c_dim == 4:
+            if enc_dim == 4:
                 title = f'{self.run_id}_3Dc'
                 fig = create_default_figure(title, it, losses)
                 ax = Axes3D(fig)
                 ax.set_xlim3d(0, 255)
                 ax.set_ylim3d(0, 255)
                 ax.set_zlim3d(0, 255)
-                ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2], c=coords[:, 3])
+                ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2], c=coords[:, 3], s=POINTS_SIZE)
                 fig.savefig(self.__figure_path(title, it))
                 plt.close(fig)
 
