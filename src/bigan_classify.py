@@ -118,25 +118,16 @@ class ClassifyCellBiGan(BasicBiGan):
         batch_size = len(batch)
         y_ones = tf.repeat(0.95, batch_size)
         y_zeros = tf.zeros(batch_size)
-
         encodings = self._random_encoding_vector(batch_size)
         z = self._random_uniform_vector(batch_size)
-        # print_dot()
-        # self.print_params_changes('before train gen:')
-        g_loss = self.__train_generator(encodings, z, y_ones)
-        # self.print_params_changes(' after train gen:')
-        # print_dot()
-        e_loss = self.__train_encoder(batch, y_zeros)
-        # self.print_params_changes(' after train enc:')
 
-        # print_dot()
+        g_loss = self.__train_generator(encodings, z, y_ones)
+        e_loss = self.__train_encoder(batch, y_zeros)
+
         generated_cells = self.generate_cells(encodings, z)
         d_loss_1 = self.__train_discriminator(encodings, generated_cells, y_zeros)
-        # self.print_params_changes(' after train d/g:')
-        # print_dot()
         generated_encodings = self.trainings_encoding_prediction(batch)
         d_loss_2 = self.__train_discriminator(generated_encodings, batch, y_ones)
-        # self.print_params_changes(' after train d/e:')
         d_loss = np.mean([d_loss_1, d_loss_2])
 
         return g_loss, e_loss, d_loss

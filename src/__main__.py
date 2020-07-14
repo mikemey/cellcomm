@@ -40,6 +40,7 @@ def create_interceptors(log_dir_, run_id_, trainer_):
         ics.log_losses(),
         # ics.plot_clusters_on_data(trainer_),
         ics.plot_encodings_directly(trainer_),
+        ics.save_gene_sample(trainer_),
         # lambda _, __: print('-|')
     ])
 
@@ -51,7 +52,7 @@ def check_log_dir(log_dir_):
     log_path.mkdir(parents=True)
 
 
-RUN_ID_TEMPLATE = '{}-TAC4-de_{}'
+RUN_ID_TEMPLATE = '{}_TAC4-gen2inputs-e_{}'
 
 
 def run_training(source_file=MATRIX_FILES[1], batch_size=128):

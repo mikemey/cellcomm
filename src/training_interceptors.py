@@ -178,7 +178,7 @@ class ParamInterceptors:
         noise_shape = trainer_.network.encoding_size, len(encodings_in)
 
         def intercept(it, losses):
-            if it in [0, 9, 19, 29, 39, 99]:
+            if it in [0, 9, 49, 99, 199]:
                 noise = np.random.uniform(0, 1, noise_shape)
                 cell_predictions = trainer_.network.generate_cells(encodings_in, noise)
                 df = pd.DataFrame.from_records(cell_predictions)
