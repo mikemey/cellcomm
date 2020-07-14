@@ -8,6 +8,7 @@ import umap
 from mpl_toolkits.mplot3d import Axes3D
 
 from support.data_sink import DataSink
+import pandas as pd
 
 
 def combined_interceptor(interceptors):
@@ -150,15 +151,15 @@ class ParamInterceptors:
                 fig.savefig(self.__figure_path(title, it))
                 plt.close(fig)
 
-                title = f'{self.run_id}_3Dm'
-                fig = create_default_figure(title, it, losses)
-                ax = Axes3D(fig)
-                ax.set_xlim3d(0, 255)
-                ax.set_ylim3d(0, 255)
-                ax.set_zlim3d(0, 255)
-                ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2])
-                fig.savefig(self.__figure_path(title, it))
-                plt.close(fig)
+                # title = f'{self.run_id}_3Dm'
+                # fig = create_default_figure(title, it, losses)
+                # ax = Axes3D(fig)
+                # ax.set_xlim3d(0, 255)
+                # ax.set_ylim3d(0, 255)
+                # ax.set_zlim3d(0, 255)
+                # ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2])
+                # fig.savefig(self.__figure_path(title, it))
+                # plt.close(fig)
             if c_dim == 4:
                 title = f'{self.run_id}_3Dc'
                 fig = create_default_figure(title, it, losses)
@@ -169,6 +170,16 @@ class ParamInterceptors:
                 ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2], c=coords[:, 3])
                 fig.savefig(self.__figure_path(title, it))
                 plt.close(fig)
+
+        return intercept
+
+    def save_gene_sample(self, trainer_):
+        def intercept(it, losses):
+            if it in [0, 9, 19, 29, 39, 99]:
+                noise = np.random.uniform(0, 1, (trainer_.network.encoding_size, 3))
+                cell_predictions = trainer_.network.cell_prediction(noise)
+                df = pd.DataFrame.from_records(cell_predictions)
+                df.to_csv(f'{self.log_dir}/{self.run_id}_cells_{str(it).zfill(4)}.csv')
 
         return intercept
 
