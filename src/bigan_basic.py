@@ -4,6 +4,7 @@ from typing import final, Callable
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.keras import Model
+from copy import deepcopy
 
 
 class BasicBiGan:
@@ -31,7 +32,7 @@ class BasicBiGan:
     @final
     def cell_prediction(self, gen_input):
         prediction = self._generator.predict(gen_input)
-        return np.round(prediction)
+        return tf.math.round(prediction)
 
     @abstractmethod
     def trainings_step(self, sampled_batch):
@@ -44,12 +45,20 @@ class BasicBiGan:
         self.__prev_params = curr_params
 
     def __last_layer_params(self):
-        return [component.layers[-1].get_weights() for component in self.all_components]
+        def collect_weights(component):
+            collected_weights = []
+            for lay in component.layers:
+                if len(lay.get_weights()) == 2:
+                    for weights in lay.get_weights():
+                        collected_weights.append(deepcopy(weights))
+            return collected_weights
+
+        return list(map(collect_weights, self.all_components))
 
 
 def components_changed(p_now, p_orig):
-    w_now, b_now = p_now
-    w_orig, b_orig = p_orig
-    w_matrix = tf.math.equal(w_now, w_orig)
-    b_matrix = tf.math.equal(b_now, b_orig)
-    return not (np.all(w_matrix) and np.all(b_matrix))
+    for n, o in zip(p_now, p_orig):
+        equality_matrix = tf.math.equal(n, o)
+        if not np.all(equality_matrix):
+            return True
+    return False
