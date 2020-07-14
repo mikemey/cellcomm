@@ -31,12 +31,13 @@ class BasicBiGanTestCase(TFTestCase):
         predict_mock.assert_called_with(test_genes)
 
     def test_cell_data_prediction(self):
-        random_input = [[1, 0], [0, 1]]
+        encoding_in = [[1, 0], [0, 1]]
+        random_in = [[0.2, 0.], [0.99, 0.99]]
         test_prediction = [[0.3, 12.59939265, 2.4894546, 0.01],
                            [0.9, 4.7007282, 0, 2.07244989]]
         expected_cells = [[0, 13, 2, 0], [1, 5, 0, 2]]
         self.bigan._generator.predict = predict_mock = MagicMock(return_value=test_prediction)
 
-        gen_cells = self.bigan.cell_prediction(random_input)
+        gen_cells = self.bigan.generate_cells(encoding_in, random_in)
         self.assertDeepEqual(expected_cells, gen_cells)
-        predict_mock.assert_called_with(random_input)
+        predict_mock.assert_called_with((encoding_in, random_in))

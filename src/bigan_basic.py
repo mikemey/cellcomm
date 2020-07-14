@@ -30,8 +30,8 @@ class BasicBiGan:
         return self._encoder.predict(cell_data)
 
     @final
-    def cell_prediction(self, gen_input):
-        prediction = self._generator.predict(gen_input)
+    def generate_cells(self, encoding_in, random_in):
+        prediction = self._generator.predict((encoding_in, random_in))
         return tf.math.round(prediction)
 
     @abstractmethod

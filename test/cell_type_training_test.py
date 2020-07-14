@@ -45,7 +45,7 @@ class CellTrainingTestCase(TFTestCase):
     def test_bigan_setup(self):
         bigan = self.trainer.network
         self.assertEqual(TEST_ENCODING_SIZE, bigan.encoding_size)
-        self.assertEqual((None, TEST_ENCODING_SIZE), bigan._generator.input_shape)
+        self.assertEqual([(None, TEST_ENCODING_SIZE), (None, TEST_ENCODING_SIZE)], bigan._generator.input_shape)
         self.assertEqual((None, TEST_GENE_COUNT), bigan._generator.output_shape)
 
     def test_trainings_run(self):
