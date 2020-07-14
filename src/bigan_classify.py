@@ -86,18 +86,23 @@ class ClassifyCellBiGan(BasicBiGan):
                  encoder_factory: Callable[[int, int], Model] = _build_encoder,
                  discriminator_factory: Callable[[int, int], Model] = _build_discriminator):
         super().__init__(encoding_size, gene_size, generator_factory, encoder_factory, discriminator_factory)
-        discr_optimizer = optimizers.Adam()
+        discr_optimizer = optimizers.RMSprop()
         discr_loss = losses.binary_crossentropy
 
         self._discriminator.trainable = False
         gen_output = self._discriminator((self._generator.inputs[0], self._generator.output))
-        self._generator_train_model = Model(self._generator.inputs, gen_output, name='generator-trainings-model')
-        self._generator_train_model.compile(optimizer=discr_optimizer, loss=discr_loss)
+        self._train_gen_w_discr = Model(self._generator.inputs, gen_output, name='train-generator-with-discriminator')
+        self._train_gen_w_discr.compile(optimizer=discr_optimizer, loss=discr_loss)
 
         self._discriminator.trainable = False
         enc_output = self._discriminator((self._encoder.output, self._encoder.input))
-        self._encoder_train_model = Model(self._encoder.inputs, enc_output, name='encoder-trainings-model')
-        self._encoder_train_model.compile(optimizer=discr_optimizer, loss=discr_loss)
+        self._train_enc_w_discr = Model(self._encoder.inputs, enc_output, name='train-encoder-with-discriminator')
+        self._train_enc_w_discr.compile(optimizer=discr_optimizer, loss=discr_loss)
+
+        self._generator.trainable = False
+        gen_enc_output = self._encoder(self._generator.output)
+        self._train_enc_w_gen = Model(self._generator.inputs, gen_enc_output, name='train-encoder-with-generator')
+        self._train_enc_w_gen.compile(optimizer=discr_optimizer, loss=losses.mse)
 
         self._discriminator.trainable = True
         self._discriminator.compile(optimizer=discr_optimizer, loss=discr_loss)
@@ -119,12 +124,12 @@ class ClassifyCellBiGan(BasicBiGan):
         y_ones = tf.repeat(0.95, batch_size)
         y_zeros = tf.zeros(batch_size)
         encodings = self._random_encoding_vector(batch_size)
-        z = self._random_uniform_vector(batch_size)
+        noise = self._random_uniform_vector(batch_size)
 
-        g_loss = self.__train_generator(encodings, z, y_ones)
-        e_loss = self.__train_encoder(batch, y_zeros)
+        g_loss = self.__train_generator(encodings, noise, y_ones)
+        e_loss = self.__train_encoder(batch, y_zeros, encodings, noise)
 
-        generated_cells = self.generate_cells(encodings, z)
+        generated_cells = self.generate_cells(encodings, noise)
         d_loss_1 = self.__train_discriminator(encodings, generated_cells, y_zeros)
         generated_encodings = self.trainings_encoding_prediction(batch)
         d_loss_2 = self.__train_discriminator(generated_encodings, batch, y_ones)
@@ -133,10 +138,12 @@ class ClassifyCellBiGan(BasicBiGan):
         return g_loss, e_loss, d_loss
 
     def __train_generator(self, encodings, noise, target):
-        return self._generator_train_model.train_on_batch((encodings, noise), target)
+        return self._train_gen_w_discr.train_on_batch((encodings, noise), target)
 
-    def __train_encoder(self, cell_data, target):
-        return self._encoder_train_model.train_on_batch(cell_data, target)
+    def __train_encoder(self, cell_data, target, encodings, noise):
+        loss_from_discr = self._train_enc_w_discr.train_on_batch(cell_data, target)
+        loss_from_gen = self._train_enc_w_gen.train_on_batch((encodings, noise), encodings)
+        return loss_from_discr + loss_from_gen
 
     def __train_discriminator(self, encodings, cell_data, target):
         return self._discriminator.train_on_batch((encodings, cell_data), target)
