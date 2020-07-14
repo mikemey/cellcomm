@@ -174,14 +174,26 @@ class ParamInterceptors:
         return intercept
 
     def save_gene_sample(self, trainer_):
+        encodings_in = permuted_vector(trainer_.network.encoding_size, 3)
+        noise_shape = trainer_.network.encoding_size, len(encodings_in)
+
         def intercept(it, losses):
             if it in [0, 9, 19, 29, 39, 99]:
-                noise = np.random.uniform(0, 1, (trainer_.network.encoding_size, 3))
-                cell_predictions = trainer_.network.cell_prediction(noise)
+                noise = np.random.uniform(0, 1, noise_shape)
+                cell_predictions = trainer_.network.generate_cells(encodings_in, noise)
                 df = pd.DataFrame.from_records(cell_predictions)
                 df.to_csv(f'{self.log_dir}/{self.run_id}_cells_{str(it).zfill(4)}.csv')
 
         return intercept
+
+
+def permuted_vector(v_width, copies_per_v):
+    coll = []
+    for i in range(v_width):
+        cat = np.zeros(v_width)
+        cat[i] = 1.0
+        coll.extend([cat] * copies_per_v)
+    return coll
 
 
 def create_2d_points(algo_class, algo_name, data):
