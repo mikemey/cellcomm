@@ -3,12 +3,14 @@ from datetime import datetime
 import atexit
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import sklearn.manifold as skm
 import umap
 from mpl_toolkits.mplot3d import Axes3D
+from tensorflow import convert_to_tensor
+from tensorflow.python.keras import backend
 
 from support.data_sink import DataSink
-import pandas as pd
 
 
 def combined_interceptor(interceptors):
@@ -151,15 +153,16 @@ class ParamInterceptors:
                 fig.savefig(self.__figure_path(title, it))
                 plt.close(fig)
 
-                # title = f'{self.run_id}_3Dm'
-                # fig = create_default_figure(title, it, losses)
-                # ax = Axes3D(fig)
-                # ax.set_xlim3d(0, 255)
-                # ax.set_ylim3d(0, 255)
-                # ax.set_zlim3d(0, 255)
-                # ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2])
-                # fig.savefig(self.__figure_path(title, it))
-                # plt.close(fig)
+                title = f'{self.run_id}_3Dm'
+                fig = create_default_figure(title, it, losses)
+                ax = Axes3D(fig)
+                ax.set_xlim3d(0, 255)
+                ax.set_ylim3d(0, 255)
+                ax.set_zlim3d(0, 255)
+                ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2])
+                fig.savefig(self.__figure_path(title, it))
+                plt.close(fig)
+
             if c_dim == 4:
                 title = f'{self.run_id}_3Dc'
                 fig = create_default_figure(title, it, losses)
@@ -174,14 +177,15 @@ class ParamInterceptors:
         return intercept
 
     def save_gene_sample(self, trainer_):
-        encodings_in = permuted_vector(trainer_.network.encoding_size, 3)
-        noise_shape = trainer_.network.encoding_size, len(encodings_in)
+        encodings_in = convert_to_tensor(permuted_vector(trainer_.network.encoding_size, 2))
+        noise_shape = len(encodings_in), trainer_.network.encoding_size
 
         def intercept(it, losses):
             if it in [0, 9, 49, 99, 199]:
-                noise = np.random.uniform(0, 1, noise_shape)
+                noise = convert_to_tensor(np.random.uniform(0, 1, noise_shape))
                 cell_predictions = trainer_.network.generate_cells(encodings_in, noise)
-                df = pd.DataFrame.from_records(cell_predictions)
+                data = backend.eval(cell_predictions)
+                df = pd.DataFrame.from_records(data)
                 df.to_csv(f'{self.log_dir}/{self.run_id}_cells_{str(it).zfill(4)}.csv')
 
         return intercept
