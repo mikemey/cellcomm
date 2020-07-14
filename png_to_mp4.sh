@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-image_delay=50
+image_delay=60
 image_ids=(
   "2Dc"
   "3Dm"
