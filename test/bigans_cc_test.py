@@ -3,7 +3,6 @@ from unittest.mock import MagicMock
 
 import numpy as np
 import tensorflow as tf
-from pandas import DataFrame
 from tensorflow.keras import optimizers, losses
 
 from bigan_classify import ClassifyCellBiGan
@@ -20,17 +19,17 @@ class ClassifyBiGanTestCase(TFTestCase):
 
         encoding_in = generator.layers[0]
         random_in = generator.layers[1]
-        self.assertEqual('encoding_in', encoding_in.name)
-        self.assertEqual('random_in', random_in.name)
+        self.assertEqual('gen_encoding_in', encoding_in.name)
+        self.assertEqual('gen_random_in', random_in.name)
         self.assertEqual([(None, 15)], encoding_in.input_shape)
         self.assertEqual([(None, 15)], random_in.input_shape)
         self.assertEqual((None, 1000), generator.output_shape)
         self.assertEqual(tf.nn.relu, generator.layers[-1].activation)
 
-        gen_train = bigan._generator_train_model
+        gen_train = bigan._train_gen_w_discr
         self.assertTrue(gen_train._is_compiled)
         self.assertEqual(losses.binary_crossentropy, gen_train.loss)
-        self.assertEqual(optimizers.Adam, type(gen_train.optimizer))
+        self.assertEqual(optimizers.RMSprop, type(gen_train.optimizer))
         self.assertEqual(tf.nn.sigmoid, gen_train.layers[-1].layers[-1].activation)
 
     def test_encoder_train_model(self):
@@ -40,10 +39,10 @@ class ClassifyBiGanTestCase(TFTestCase):
         self.assertEqual((None, 12), encoder.output_shape)
         self.assertEqual(tf.nn.softmax, encoder.layers[-1].activation)
 
-        enc_train = bigan._encoder_train_model
+        enc_train = bigan._train_enc_w_discr
         self.assertTrue(enc_train._is_compiled)
         self.assertEqual(losses.binary_crossentropy, enc_train.loss)
-        self.assertEqual(optimizers.Adam, type(enc_train.optimizer))
+        self.assertEqual(optimizers.RMSprop, type(enc_train.optimizer))
         self.assertEqual(tf.nn.sigmoid, enc_train.layers[-1].layers[-1].activation)
 
     def test_discriminator_model(self):
@@ -52,7 +51,7 @@ class ClassifyBiGanTestCase(TFTestCase):
         self.assertEqual([(None, 4), (None, 5)], discriminator.get_input_shape_at(0))
         self.assertEqual((None, 1), discriminator.get_output_shape_at(0))
         self.assertEqual(losses.binary_crossentropy, discriminator.loss)
-        self.assertEqual(optimizers.Adam, type(discriminator.optimizer))
+        self.assertEqual(optimizers.RMSprop, type(discriminator.optimizer))
         self.assertEqual(tf.nn.sigmoid, discriminator.layers[-1].activation)
 
     def test_random_encoding_vector(self):
@@ -70,59 +69,15 @@ class ClassifyBiGanTestCase(TFTestCase):
 
     def test_training_models(self):
         bigan = ClassifyCellBiGan(encoding_size=4, gene_size=6)
-        gen_train_model = bigan._generator_train_model
+        gen_train_model = bigan._train_gen_w_discr
         self.assertTrue(gen_train_model._is_compiled)
         self.assertEqual([(None, 4), (None, 4)], gen_train_model.input_shape)
         self.assertEqual((None, 1), gen_train_model.output_shape)
 
-        enc_train_model = bigan._encoder_train_model
+        enc_train_model = bigan._train_enc_w_discr
         self.assertTrue(enc_train_model._is_compiled)
         self.assertEqual((None, 6), enc_train_model.input_shape)
         self.assertEqual((None, 1), enc_train_model.output_shape)
-
-    def test_training_step(self):
-        test_batch_size = 3
-        rnd_encodings = tf.constant([[0.123] * test_batch_size])
-        sampled_batch = DataFrame([[14, 15]] * test_batch_size)
-        rnd_noise = [[0.01] * test_batch_size]
-
-        bigan = ClassifyCellBiGan(encoding_size=1, gene_size=2)
-        bigan._random_encoding_vector = get_encoding_mock = MagicMock(return_value=rnd_encodings)
-        bigan._random_uniform_vector = get_random_mock = MagicMock(return_value=rnd_noise)
-        bigan._generator_train_model.train_on_batch = gen_train_mock = MagicMock(return_value='g-loss')
-        bigan._encoder_train_model.train_on_batch = enc_train_mock = MagicMock(return_value='e-loss')
-
-        gen_prediction = tf.constant([[10., 11.]] * test_batch_size)
-        enc_prediction = tf.constant([[2]] * test_batch_size)
-        bigan.generate_cells = gen_cells_mock = MagicMock(return_value=gen_prediction)
-        bigan.trainings_encoding_prediction = train_encoding_mock = MagicMock(return_value=enc_prediction)
-        bigan._discriminator.train_on_batch = discr_train_mock = MagicMock(side_effect=[3, 5])
-
-        test_losses = bigan.trainings_step(sampled_batch)
-        self.assertEqual(('g-loss', 'e-loss', 4), test_losses)
-
-        self.assertEqual(1, get_encoding_mock.call_count)
-        get_encoding_mock.assert_called_with(test_batch_size)
-        self.assertEqual(1, get_random_mock.call_count)
-        get_random_mock.assert_called_with(test_batch_size)
-
-        def assert_mock_calls(mock, args):
-            for ix, m_arg in enumerate(args):
-                self.assertDeepEqual(m_arg, mock.call_args[0][ix])
-
-        y_gen, y_enc = tf.repeat(0.95, test_batch_size), tf.repeat(0., test_batch_size)
-        assert_mock_calls(gen_train_mock, args=((rnd_encodings, rnd_noise), y_gen))
-        assert_mock_calls(enc_train_mock, args=(sampled_batch, y_enc))
-        assert_mock_calls(gen_cells_mock, args=(rnd_encodings, rnd_noise))
-        assert_mock_calls(train_encoding_mock, args=(sampled_batch,))
-
-        self.assertDeepEqual(rnd_encodings, discr_train_mock.call_args_list[0][0][0][0])
-        self.assertDeepEqual(gen_prediction, discr_train_mock.call_args_list[0][0][0][1])
-        self.assertDeepEqual(y_enc, discr_train_mock.call_args_list[0][0][1])
-
-        self.assertDeepEqual(enc_prediction, discr_train_mock.call_args_list[1][0][0][0])
-        self.assertDeepEqual(sampled_batch, discr_train_mock.call_args_list[1][0][0][1])
-        self.assertDeepEqual(y_gen, discr_train_mock.call_args_list[1][0][1])
 
     def test_trainings_encoding_prediction(self):
         bigan = ClassifyCellBiGan(encoding_size=2, gene_size=4)
@@ -141,17 +96,17 @@ class ContinuousBiGanTestCase(TFTestCase):
         generator = bigan._generator
         encoding_in = generator.layers[0]
         random_in = generator.layers[1]
-        self.assertEqual('encoding_in', encoding_in.name)
-        self.assertEqual('random_in', random_in.name)
+        self.assertEqual('gen_encoding_in', encoding_in.name)
+        self.assertEqual('gen_random_in', random_in.name)
         self.assertEqual([(None, 13)], encoding_in.input_shape)
         self.assertEqual([(None, 13)], random_in.input_shape)
         self.assertEqual((None, 100), generator.output_shape)
         self.assertEqual(tf.nn.relu, generator.layers[-1].activation)
 
-        gen_train = bigan._generator_train_model
+        gen_train = bigan._train_gen_w_discr
         self.assertTrue(gen_train._is_compiled)
         self.assertEqual(losses.binary_crossentropy, gen_train.loss)
-        self.assertEqual(optimizers.Adam, type(gen_train.optimizer))
+        self.assertEqual(optimizers.RMSprop, type(gen_train.optimizer))
         self.assertEqual(tf.nn.sigmoid, gen_train.layers[-1].layers[-1].activation)
 
     def test_encoder_model(self):
@@ -160,12 +115,12 @@ class ContinuousBiGanTestCase(TFTestCase):
 
     def test_training_models(self):
         bigan = ContinuousCellBiGan(encoding_size=7, gene_size=11)
-        gen_train_model = bigan._generator_train_model
+        gen_train_model = bigan._train_gen_w_discr
         self.assertTrue(gen_train_model._is_compiled)
         self.assertEqual([(None, 7), (None, 7)], gen_train_model.input_shape)
         self.assertEqual((None, 1), gen_train_model.output_shape)
 
-        enc_train_model = bigan._encoder_train_model
+        enc_train_model = bigan._train_enc_w_discr
         self.assertTrue(enc_train_model._is_compiled)
         self.assertEqual((None, 11), enc_train_model.input_shape)
         self.assertEqual((None, 1), enc_train_model.output_shape)
