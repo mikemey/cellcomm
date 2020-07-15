@@ -52,12 +52,12 @@ def check_log_dir(log_dir_):
     log_path.mkdir(parents=True)
 
 
-RUN_ID_TEMPLATE = '{}_TAC4-bi-train-e_{}'
+RUN_ID_TEMPLATE = '{}_TAC4-LR9990-e_{}'
 
 
 def run_training(source_file=MATRIX_FILES[1], batch_size=128):
     data_source = load_matrix(data_file(source_file), verbose=True)
-    for encoding_size in range(3, 5):
+    for encoding_size in range(3, 4):
         now = datetime.now().strftime('%m-%d-%H%M')
         run_id = RUN_ID_TEMPLATE.format(now, encoding_size)
         log_dir = log_file(run_id)
@@ -66,7 +66,7 @@ def run_training(source_file=MATRIX_FILES[1], batch_size=128):
         trainer = CellTraining(data_source, batch_size=batch_size, encoding_size=encoding_size)
         # trainer.network.summary()
         interceptors = create_interceptors(log_dir, run_id, trainer)
-        trainer.run(1000, interceptor=interceptors)
+        trainer.run(9990, interceptor=interceptors)
 
 
 def store_converted_cell_file(matrix_file, cell_file):

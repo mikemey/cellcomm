@@ -138,43 +138,44 @@ class ParamInterceptors:
 
         return intercept
 
-    def plot_encodings_directly(self, trainer_):
+    def plot_encodings_directly(self, trainer_, skip_steps=10):
         def intercept(it, losses):
-            encodings = trainer_.network.encoding_prediction(trainer_.data)
-            enc_dim = np.shape(encodings)[1]
-            coords = np.multiply(encodings, 255)
+            if (it % skip_steps) >= (skip_steps - 1):
+                encodings = trainer_.network.encoding_prediction(trainer_.data)
+                enc_dim = np.shape(encodings)[1]
+                coords = np.multiply(encodings, 255)
 
-            if enc_dim == 3:
-                title = f'{self.run_id}_2Dc'
-                fig = create_default_figure(title, it, losses)
-                for ax in fig.axes:
-                    ax.set_xlim(0, 255)
-                    ax.set_ylim(0, 255)
-                plt.scatter(coords[:, 0], coords[:, 1], c=coords[:, 2])
-                fig.tight_layout()
-                fig.savefig(self.__figure_path(title, it))
-                plt.close(fig)
+                if enc_dim == 3:
+                    title = f'{self.run_id}_2Dc'
+                    fig = create_default_figure(title, it, losses)
+                    for ax in fig.axes:
+                        ax.set_xlim(0, 255)
+                        ax.set_ylim(0, 255)
+                    plt.scatter(coords[:, 0], coords[:, 1], c=coords[:, 2])
+                    fig.tight_layout()
+                    fig.savefig(self.__figure_path(title, it))
+                    plt.close(fig)
 
-                title = f'{self.run_id}_3Dm'
-                fig = create_default_figure(title, it, losses)
-                ax = Axes3D(fig)
-                ax.set_xlim3d(0, 255)
-                ax.set_ylim3d(0, 255)
-                ax.set_zlim3d(0, 255)
-                ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2], s=POINTS_SIZE)
-                fig.savefig(self.__figure_path(title, it))
-                plt.close(fig)
+                    title = f'{self.run_id}_3Dm'
+                    fig = create_default_figure(title, it, losses)
+                    ax = Axes3D(fig)
+                    ax.set_xlim3d(0, 255)
+                    ax.set_ylim3d(0, 255)
+                    ax.set_zlim3d(0, 255)
+                    ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2], s=POINTS_SIZE)
+                    fig.savefig(self.__figure_path(title, it))
+                    plt.close(fig)
 
-            if enc_dim == 4:
-                title = f'{self.run_id}_3Dc'
-                fig = create_default_figure(title, it, losses)
-                ax = Axes3D(fig)
-                ax.set_xlim3d(0, 255)
-                ax.set_ylim3d(0, 255)
-                ax.set_zlim3d(0, 255)
-                ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2], c=coords[:, 3], s=POINTS_SIZE)
-                fig.savefig(self.__figure_path(title, it))
-                plt.close(fig)
+                if enc_dim == 4:
+                    title = f'{self.run_id}_3Dc'
+                    fig = create_default_figure(title, it, losses)
+                    ax = Axes3D(fig)
+                    ax.set_xlim3d(0, 255)
+                    ax.set_ylim3d(0, 255)
+                    ax.set_zlim3d(0, 255)
+                    ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2], c=coords[:, 3], s=POINTS_SIZE)
+                    fig.savefig(self.__figure_path(title, it))
+                    plt.close(fig)
 
         return intercept
 
