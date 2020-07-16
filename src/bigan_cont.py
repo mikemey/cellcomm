@@ -49,7 +49,7 @@ class ContinuousCellBiGan(ClassifyCellBiGan):
             encoder_factory=_build_encoder
         )
 
-    def _random_encoding_vector(self, batch_size):
+    def random_encoding_vector(self, batch_size):
         return tf.random.uniform(shape=(batch_size, self.encoding_size), minval=0, maxval=1)
 
     def trainings_encoding_prediction(self, cell_data):

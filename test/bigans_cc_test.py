@@ -57,7 +57,7 @@ class ClassifyBiGanTestCase(TFTestCase):
     def test_random_encoding_vector(self):
         np.random.seed(21)
         cell_bigan = ClassifyCellBiGan(encoding_size=4, gene_size=1)
-        hv = cell_bigan._random_encoding_vector(5)
+        hv = cell_bigan.random_encoding_vector(5)
         exp = np.array([[0, 1, 0, 0], [0, 0, 0, 1], [1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0]])
         self.assertEqual((5, 4), np.shape(hv))
         self.assertDeepEqual(exp, hv)
@@ -123,7 +123,7 @@ class ContinuousBiGanTestCase(TFTestCase):
     def test_random_encoding_vector(self):
         cell_bigan = ContinuousCellBiGan(encoding_size=20, gene_size=1)
         for _ in range(30):
-            cell_encoding = cell_bigan._random_encoding_vector(3)
+            cell_encoding = cell_bigan.random_encoding_vector(3)
             self.assertEqual((3, 20), cell_encoding.shape)
             self.assertTrue(np.all(cell_encoding > 0), f'cell_encoding with values < 0:\n{cell_encoding}')
             self.assertTrue(np.all(cell_encoding < 1), f'cell_encoding with values > 1:\n{cell_encoding}')

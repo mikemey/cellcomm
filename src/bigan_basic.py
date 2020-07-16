@@ -29,6 +29,10 @@ class BasicBiGan:
     def encoding_prediction(self, cell_data):
         return self._encoder.predict(cell_data)
 
+    @abstractmethod
+    def random_encoding_vector(self, batch_size):
+        pass
+
     def random_uniform_vector(self, batch_size):
         return tf.random.uniform(shape=(batch_size, self.encoding_size), minval=0, maxval=1)
 
@@ -42,6 +46,25 @@ class BasicBiGan:
     @abstractmethod
     def trainings_step(self, sampled_batch):
         pass
+
+    def evaluate_accuracy(self, sampled_batch):
+        """
+            return format: (( true-positives, false-positives ), ( true-negatives, false-negatives ))
+        """
+        batch_size = len(sampled_batch)
+        random_encodings = self.random_encoding_vector(batch_size)
+        generated_cells = self.generate_cells(random_encodings)
+        result = self._discriminator.predict((random_encodings, generated_cells), use_multiprocessing=True)
+        false_negatives = np.count_nonzero(np.round(result))
+
+        encodings = self.encoding_prediction(sampled_batch)
+        result = self._discriminator.predict((encodings, sampled_batch), use_multiprocessing=True)
+        true_positives = np.count_nonzero(np.round(result))
+
+        return (
+            (true_positives, batch_size - true_positives),
+            (batch_size - false_negatives, false_negatives)
+        )
 
     def print_params_changes(self, msg):
         curr_params = self.__last_layer_params()

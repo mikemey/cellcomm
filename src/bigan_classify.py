@@ -114,7 +114,7 @@ class ClassifyCellBiGan(BasicBiGan):
         self._discriminator.trainable = True
         self._discriminator.compile(optimizer=discr_optimizer, loss=losses.binary_crossentropy)
 
-    def _random_encoding_vector(self, batch_size):
+    def random_encoding_vector(self, batch_size):
         rand_ixs = np.random.randint(0, self.encoding_size, batch_size)
         return tf.keras.utils.to_categorical(rand_ixs, self.encoding_size)
 
@@ -127,7 +127,7 @@ class ClassifyCellBiGan(BasicBiGan):
         batch_size = len(batch)
         y_ones = tf.repeat(0.95, batch_size)
         y_zeros = tf.zeros(batch_size)
-        encodings = self._random_encoding_vector(batch_size)
+        encodings = self.random_encoding_vector(batch_size)
         noise = self.random_uniform_vector(batch_size)
 
         g_loss = self.__train_generator(batch, encodings, noise, y_ones)
