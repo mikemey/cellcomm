@@ -55,13 +55,13 @@ class BasicBiGanTestCase(TFTestCase):
         self.bigan.random_encoding_vector = random_encodings_mock = MagicMock(return_value=random_encodings)
         self.bigan.encoding_prediction = encoder_mock = MagicMock(return_value=generated_encodings)
         self.bigan._discriminator.predict = discr_mock = MagicMock(side_effect=[
-            [0.1, 0.9, 0.55], [0.9, 0.9, 0.45]
+            [0.45, 0.9, 0.55], [0.9, 0.9, 0.55]
         ])
-        accuracies = self.bigan.evaluate_accuracy(data_batch)
+        accuracies = self.bigan.evaluate_discriminator_accuracy(data_batch)
 
         random_encodings_mock.assert_called_once_with(len(data_batch))
         generator_mock.assert_called_once_with(random_encodings)
         discr_mock.assert_any_call((random_encodings, generated_cells), use_multiprocessing=True)
         encoder_mock.assert_called_once_with(data_batch)
         discr_mock.assert_any_call((generated_encodings, data_batch), use_multiprocessing=True)
-        self.assertEqual(((2, 1), (1, 2)), accuracies)
+        self.assertEqual((3, 1), accuracies)

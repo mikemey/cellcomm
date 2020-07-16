@@ -65,12 +65,13 @@ class ParamInterceptors:
 
     def log_accuracy(self, trainer: CellTraining):
         graph_id = 'accuracy'
-        self.sink.add_graph_header(graph_id, ['iteration', 'true-pos', 'false-pos', 'true-neg', 'false-neg'])
+        self.sink.add_graph_header(graph_id, ['iteration', 'pos-pct', 'neg-pct'])
 
         def intercept(it, _):
             batch = trainer.sample_cell_data()
-            (tp, fp), (tn, fn) = trainer.network.evaluate_accuracy(batch)
-            self.sink.add_data(graph_id, [it, tp, fp, tn, fn])
+            batch_size = len(batch)
+            tp_acc, tn_acc = trainer.network.evaluate_discriminator_accuracy(batch)
+            self.sink.add_data(graph_id, [it, tp_acc / batch_size, tn_acc / batch_size])
 
         return intercept
 

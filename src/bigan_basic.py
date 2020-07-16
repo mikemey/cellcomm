@@ -47,9 +47,9 @@ class BasicBiGan:
     def trainings_step(self, sampled_batch):
         pass
 
-    def evaluate_accuracy(self, sampled_batch):
+    def evaluate_discriminator_accuracy(self, sampled_batch):
         """
-            return format: (( true-positives, false-positives ), ( true-negatives, false-negatives ))
+            return format: ( true-positives, true-negatives )
         """
         batch_size = len(sampled_batch)
         random_encodings = self.random_encoding_vector(batch_size)
@@ -61,10 +61,7 @@ class BasicBiGan:
         result = self._discriminator.predict((encodings, sampled_batch), use_multiprocessing=True)
         true_positives = np.count_nonzero(np.round(result))
 
-        return (
-            (true_positives, batch_size - true_positives),
-            (batch_size - false_negatives, false_negatives)
-        )
+        return true_positives, batch_size - false_negatives
 
     def print_params_changes(self, msg):
         curr_params = self.__last_layer_params()
