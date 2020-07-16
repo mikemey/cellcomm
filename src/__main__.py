@@ -1,13 +1,12 @@
 import os
 import pathlib
-from datetime import datetime
-
 import signal
+from datetime import datetime
 
 import sys
 
 from cell_type_training import CellTraining, load_matrix
-from training_interceptors import ParamInterceptors, combined_interceptor
+from training_interceptors import ParamInterceptors, combined_interceptor, skip_iterations
 
 
 def data_file(data_file_):
@@ -40,10 +39,10 @@ def create_interceptors(log_dir_, run_id_, trainer_):
     return combined_interceptor([
         ics.print_losses,
         ics.log_losses(),
-        ics.log_accuracy(trainer_),
+        skip_iterations(ics.log_accuracy(trainer_), 10),
         # ics.plot_clusters_on_data(trainer_),
-        ics.plot_encodings_directly(trainer_),
-        ics.save_gene_sample(trainer_),
+        skip_iterations(ics.plot_encodings_directly(trainer_), 100),
+        # ics.save_gene_sample(trainer_),
         # lambda _, __: print('-|')
     ])
 

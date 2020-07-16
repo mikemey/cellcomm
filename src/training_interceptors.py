@@ -17,11 +17,19 @@ POINTS_SIZE = 0.3
 
 
 def combined_interceptor(interceptors):
-    def call_all(it, all_losses):
+    def call_all(it, losses):
         for ic in interceptors:
-            ic(it, all_losses)
+            ic(it, losses)
 
     return call_all
+
+
+def skip_iterations(interceptor, steps):
+    def intercept(it, losses):
+        if (it % steps) >= (steps - 1):
+            interceptor(it, losses)
+
+    return intercept
 
 
 def create_default_figure(title, it, losses):
@@ -59,7 +67,7 @@ class ParamInterceptors:
         graph_id = 'accuracy'
         self.sink.add_graph_header(graph_id, ['iteration', 'true-pos', 'false-pos', 'true-neg', 'false-neg'])
 
-        def intercept(it, losses):
+        def intercept(it, _):
             batch = trainer.sample_cell_data()
             (tp, fp), (tn, fn) = trainer.network.evaluate_accuracy(batch)
             self.sink.add_data(graph_id, [it, tp, fp, tn, fn])
@@ -69,7 +77,7 @@ class ParamInterceptors:
     def __figure_path(self, title, iteration):
         return f'{self.log_dir}/{title}_{str(iteration).zfill(4)}.png'
 
-    def plot_fully(self, trainer, reduction_algo, show_plot=False, save_plot=True, name='', skip_steps=2):
+    def plot_fully(self, trainer, reduction_algo, show_plot=False, save_plot=True, name=''):
         algo_name = type(reduction_algo).__name__.lower() + name
         full_id = f'{self.run_id}_{algo_name}'
 
@@ -91,17 +99,16 @@ class ParamInterceptors:
             return fig
 
         def intercept(it, losses):
-            if (show_plot or save_plot) and (it % skip_steps) >= (skip_steps - 1):
-                fig = create_plot(it, losses)
-                if save_plot:
-                    fig.savefig(self.__figure_path(full_id, it))
-                if show_plot:
-                    plt.show()
-                plt.close(fig)
+            fig = create_plot(it, losses)
+            if save_plot:
+                fig.savefig(self.__figure_path(full_id, it))
+            if show_plot:
+                plt.show()
+            plt.close(fig)
 
         return intercept
 
-    def plot_rotate(self, trainer, reduction_algo, skip_steps=2):
+    def plot_rotate(self, trainer, reduction_algo):
         algo_name = type(reduction_algo).__name__.lower()
         full_id = f'{self.run_id}_{algo_name}'
 
@@ -112,80 +119,77 @@ class ParamInterceptors:
         ]
 
         def intercept(it, losses):
-            if (it % skip_steps) >= (skip_steps - 1):
-                print(f'--|-- {algo_name}... ', end='', flush=True)
-                all_encodings = trainer.network.encoding_prediction(trainer.data)
-                points = reduction_algo.fit_transform(all_encodings)
-                for p_ix, p_position in enumerate(rot_ixs):
-                    title = f'{full_id}_pos{p_ix}'
-                    fig = create_default_figure(title, it, losses)
+            print(f'--|-- {algo_name}... ', end='', flush=True)
+            all_encodings = trainer.network.encoding_prediction(trainer.data)
+            points = reduction_algo.fit_transform(all_encodings)
+            for p_ix, p_position in enumerate(rot_ixs):
+                title = f'{full_id}_pos{p_ix}'
+                fig = create_default_figure(title, it, losses)
 
-                    plt.scatter(points[:, p_position[0]], points[:, p_position[1]], c=points[:, p_position[2]])
-                    fig.tight_layout()
-                    fig.savefig(self.__figure_path(title, it))
-                    plt.close(fig)
+                plt.scatter(points[:, p_position[0]], points[:, p_position[1]], c=points[:, p_position[2]])
+                fig.tight_layout()
+                fig.savefig(self.__figure_path(title, it))
+                plt.close(fig)
 
         return intercept
 
-    def plot_clusters_on_data(self, trainer, skip_steps=2):
+    def plot_clusters_on_data(self, trainer):
         algo_metas = [(skm.TSNE, 'tsne'), (umap.UMAP, 'umap')]
 
         all_2d_points = [create_2d_points(*a_meta, trainer.data) for a_meta in algo_metas]
         print(f'- Done')
 
         def intercept(it, losses):
-            if (it % skip_steps) >= (skip_steps - 1):
-                all_encodings = trainer.network.encoding_prediction(trainer.data)
-                all_color_points = [run_fit_transform(*a_meta, all_encodings) for a_meta in algo_metas]
+            all_encodings = trainer.network.encoding_prediction(trainer.data)
+            all_color_points = [run_fit_transform(*a_meta, all_encodings) for a_meta in algo_metas]
 
-                for a_meta, xy_points, color_points in zip(algo_metas, all_2d_points, all_color_points):
-                    full_id = f'{self.run_id}_{a_meta[1]}'
-                    fig = create_default_figure(full_id, it, losses)
-                    plt.scatter(xy_points[:, 0], xy_points[:, 1], c=color_points)
-                    fig.tight_layout()
-                    fig.savefig(self.__figure_path(full_id, it))
-                    plt.close(fig)
+            for a_meta, xy_points, color_points in zip(algo_metas, all_2d_points, all_color_points):
+                full_id = f'{self.run_id}_{a_meta[1]}'
+                fig = create_default_figure(full_id, it, losses)
+                plt.scatter(xy_points[:, 0], xy_points[:, 1], c=color_points)
+                fig.tight_layout()
+                fig.savefig(self.__figure_path(full_id, it))
+                plt.close(fig)
 
         return intercept
 
-    def plot_encodings_directly(self, trainer, skip_steps=10):
+    def plot_encodings_directly(self, trainer):
         def intercept(it, losses):
-            if (it % skip_steps) >= (skip_steps - 1):
-                encodings = trainer.network.encoding_prediction(trainer.data)
-                enc_dim = np.shape(encodings)[1]
-                coords = np.multiply(encodings, 255)
+            encodings = trainer.network.encoding_prediction(trainer.data)
+            enc_dim = np.shape(encodings)[1]
+            coords = np.multiply(encodings, 255)
 
-                if enc_dim == 3:
-                    title = f'{self.run_id}_2Dc'
-                    fig = create_default_figure(title, it, losses)
-                    for ax in fig.axes:
-                        ax.set_xlim(0, 255)
-                        ax.set_ylim(0, 255)
-                    plt.scatter(coords[:, 0], coords[:, 1], c=coords[:, 2])
-                    fig.tight_layout()
-                    fig.savefig(self.__figure_path(title, it))
-                    plt.close(fig)
+            if enc_dim == 3:
+                title = f'{self.run_id}_2Dc'
+                fig = create_default_figure(title, it, losses)
+                for ax in fig.axes:
+                    ax.set_xlim(0, 255)
+                    ax.set_ylim(0, 255)
+                plt.scatter(coords[:, 0], coords[:, 1], c=coords[:, 2])
+                fig.tight_layout()
+                fig.savefig(self.__figure_path(title, it))
+                plt.close(fig)
 
-                    title = f'{self.run_id}_3Dm'
-                    fig = create_default_figure(title, it, losses)
-                    ax = Axes3D(fig)
-                    ax.set_xlim3d(0, 255)
-                    ax.set_ylim3d(0, 255)
-                    ax.set_zlim3d(0, 255)
-                    ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2], s=POINTS_SIZE)
-                    fig.savefig(self.__figure_path(title, it))
-                    plt.close(fig)
+                title = f'{self.run_id}_3Dm'
+                fig = create_default_figure(title, it, losses)
+                ax = Axes3D(fig)
+                ax.set_xlim3d(0, 255)
+                ax.set_ylim3d(0, 255)
+                ax.set_zlim3d(0, 255)
+                ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2], s=POINTS_SIZE)
+                fig.savefig(self.__figure_path(title, it))
+                plt.close(fig)
 
-                if enc_dim == 4:
-                    title = f'{self.run_id}_3Dc'
-                    fig = create_default_figure(title, it, losses)
-                    ax = Axes3D(fig)
-                    ax.set_xlim3d(0, 255)
-                    ax.set_ylim3d(0, 255)
-                    ax.set_zlim3d(0, 255)
-                    ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2], c=coords[:, 3], s=POINTS_SIZE)
-                    fig.savefig(self.__figure_path(title, it))
-                    plt.close(fig)
+            if enc_dim == 4:
+                title = f'{self.run_id}_3Dc'
+                fig = create_default_figure(title, it, losses)
+                ax = Axes3D(fig)
+                ax.set_xlim3d(0, 255)
+                ax.set_ylim3d(0, 255)
+                ax.set_zlim3d(0, 255)
+                ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2], c=coords[:, 3], s=POINTS_SIZE)
+                fig.savefig(self.__figure_path(title, it))
+                plt.close(fig)
 
         return intercept
 
@@ -193,7 +197,7 @@ class ParamInterceptors:
         encodings_in = convert_to_tensor(permuted_vector(trainer.network.encoding_size, 2))
         noise = trainer.network.random_uniform_vector(len(encodings_in))
 
-        def intercept(it, losses):
+        def intercept(it, _):
             if it in [0, 9, 49, 99, 199]:
                 cell_predictions = trainer.network.generate_cells(encodings_in, noise)
                 data = backend.eval(cell_predictions)
