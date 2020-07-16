@@ -62,11 +62,6 @@ class ClassifyBiGanTestCase(TFTestCase):
         self.assertEqual((5, 4), np.shape(hv))
         self.assertDeepEqual(exp, hv)
 
-    def test_random_uniform_vector(self):
-        cell_bigan = ClassifyCellBiGan(encoding_size=3, gene_size=1)
-        hv = cell_bigan._random_uniform_vector(7)
-        self.assertEqual((7, 3), np.shape(hv))
-
     def test_training_models(self):
         bigan = ClassifyCellBiGan(encoding_size=4, gene_size=6)
         gen_train_model = bigan._train_gen_w_discr

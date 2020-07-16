@@ -181,11 +181,10 @@ class ParamInterceptors:
 
     def save_gene_sample(self, trainer_):
         encodings_in = convert_to_tensor(permuted_vector(trainer_.network.encoding_size, 2))
-        noise_shape = len(encodings_in), trainer_.network.encoding_size
+        noise = trainer_.network.random_uniform_vector(len(encodings_in))
 
         def intercept(it, losses):
             if it in [0, 9, 49, 99, 199]:
-                noise = convert_to_tensor(np.random.uniform(0, 1, noise_shape))
                 cell_predictions = trainer_.network.generate_cells(encodings_in, noise)
                 data = backend.eval(cell_predictions)
                 df = pd.DataFrame.from_records(data)

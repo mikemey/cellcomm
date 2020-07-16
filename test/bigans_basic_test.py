@@ -41,3 +41,7 @@ class BasicBiGanTestCase(TFTestCase):
         gen_cells = self.bigan.generate_cells(encoding_in, random_in)
         self.assertDeepEqual(expected_cells, gen_cells)
         predict_mock.assert_called_with((encoding_in, random_in))
+
+    def test_random_uniform_vector(self):
+        hv = self.bigan.random_uniform_vector(7)
+        self.assertEqual((7, 15), hv.shape)

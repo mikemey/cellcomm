@@ -118,9 +118,6 @@ class ClassifyCellBiGan(BasicBiGan):
         rand_ixs = np.random.randint(0, self.encoding_size, batch_size)
         return tf.keras.utils.to_categorical(rand_ixs, self.encoding_size)
 
-    def _random_uniform_vector(self, batch_size):
-        return tf.random.uniform(shape=(batch_size, self.encoding_size), minval=0, maxval=1)
-
     def trainings_encoding_prediction(self, cell_data):
         prediction = self.encoding_prediction(cell_data)
         argmax = tf.math.argmax(prediction, -1)
@@ -131,7 +128,7 @@ class ClassifyCellBiGan(BasicBiGan):
         y_ones = tf.repeat(0.95, batch_size)
         y_zeros = tf.zeros(batch_size)
         encodings = self._random_encoding_vector(batch_size)
-        noise = self._random_uniform_vector(batch_size)
+        noise = self.random_uniform_vector(batch_size)
 
         g_loss = self.__train_generator(batch, encodings, noise, y_ones)
         e_loss = self.__train_encoder(batch, encodings, noise, y_zeros)

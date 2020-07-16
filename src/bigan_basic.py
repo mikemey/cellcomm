@@ -29,8 +29,13 @@ class BasicBiGan:
     def encoding_prediction(self, cell_data):
         return self._encoder.predict(cell_data)
 
+    def random_uniform_vector(self, batch_size):
+        return tf.random.uniform(shape=(batch_size, self.encoding_size), minval=0, maxval=1)
+
     @final
-    def generate_cells(self, encoding_in, random_in):
+    def generate_cells(self, encoding_in, random_in=None):
+        if random_in is None:
+            random_in = self.random_uniform_vector(len(encoding_in))
         prediction = self._generator.predict((encoding_in, random_in))
         return tf.math.round(prediction)
 
