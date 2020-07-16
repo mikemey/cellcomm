@@ -33,12 +33,12 @@ class CellTraining:
         self.network = ContinuousCellBiGan(encoding_size, gene_size=self.data.shape[1])
         # self.network = ClassifyCellBiGan(encoding_size, gene_size=self.data.shape[1])
 
-    def _sample_cell_data(self, random_seed=None):
+    def sample_cell_data(self, random_seed=None):
         return self.data.sample(self.batch_size, random_state=random_seed)
 
     def run(self, iterations, interceptor: Callable[[int, Any], None] = None):
         for it in range(iterations):
-            batch = self._sample_cell_data()
+            batch = self.sample_cell_data()
             step_result = self.network.trainings_step(batch)
             if interceptor:
                 interceptor(it, step_result)

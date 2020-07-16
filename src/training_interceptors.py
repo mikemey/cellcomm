@@ -10,6 +10,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from tensorflow import convert_to_tensor
 from tensorflow.python.keras import backend
 
+from cell_type_training import CellTraining
 from support.data_sink import DataSink
 
 POINTS_SIZE = 0.3
@@ -32,13 +33,12 @@ def create_default_figure(title, it, losses):
     return fig
 
 
-LOSSES_ID = 'losses'
-
-
 class ParamInterceptors:
     def __init__(self, log_dir, run_id):
         self.log_dir = log_dir
         self.run_id = run_id
+        self.sink = DataSink(log_dir=self.log_dir)
+        atexit.register(self.sink.drain_data)
 
     def print_losses(self, it, all_losses):
         g_loss, e_loss, d_loss = all_losses
@@ -46,26 +46,36 @@ class ParamInterceptors:
         print(f'[{ts}] {self.run_id} it: {it:6}  TOT: {sum(all_losses):6.3f}  G-L: {g_loss:6.3f}  E-L: {e_loss:6.3f}  D-L: {d_loss:6.3f}')
 
     def log_losses(self):
-        sink = DataSink(log_dir=self.log_dir)
-        sink.add_graph_header(LOSSES_ID, ['iteration', 'total-loss', 'g-loss', 'e-loss', 'd-loss'])
-        atexit.register(sink.drain_data)
+        graph_id = 'losses'
+        self.sink.add_graph_header(graph_id, ['iteration', 'total-loss', 'g-loss', 'e-loss', 'd-loss'])
 
         def store_record(it, all_losses):
             g_loss, e_loss, d_loss = all_losses
-            sink.add_data(LOSSES_ID, [it, sum(all_losses), g_loss, e_loss, d_loss])
+            self.sink.add_data(graph_id, [it, sum(all_losses), g_loss, e_loss, d_loss])
 
         return store_record
+
+    def log_accuracy(self, trainer: CellTraining):
+        graph_id = 'accuracy'
+        self.sink.add_graph_header(graph_id, ['iteration', 'true-pos', 'false-pos', 'true-neg', 'false-neg'])
+
+        def intercept(it, losses):
+            batch = trainer.sample_cell_data()
+            (tp, fp), (tn, fn) = trainer.network.evaluate_accuracy(batch)
+            self.sink.add_data(graph_id, [it, tp, fp, tn, fn])
+
+        return intercept
 
     def __figure_path(self, title, iteration):
         return f'{self.log_dir}/{title}_{str(iteration).zfill(4)}.png'
 
-    def plot_fully(self, trainer_, reduction_algo, show_plot=False, save_plot=True, name='', skip_steps=2):
+    def plot_fully(self, trainer, reduction_algo, show_plot=False, save_plot=True, name='', skip_steps=2):
         algo_name = type(reduction_algo).__name__.lower() + name
         full_id = f'{self.run_id}_{algo_name}'
 
         def create_plot(it, losses):
             print(f'--|-- {algo_name}... ', end='', flush=True)
-            all_encodings = trainer_.network.encoding_prediction(trainer_.data)
+            all_encodings = trainer.network.encoding_prediction(trainer.data)
             points = reduction_algo.fit_transform(all_encodings)
             fig = create_default_figure(full_id, it, losses)
 
@@ -91,7 +101,7 @@ class ParamInterceptors:
 
         return intercept
 
-    def plot_rotate(self, trainer_, reduction_algo, skip_steps=2):
+    def plot_rotate(self, trainer, reduction_algo, skip_steps=2):
         algo_name = type(reduction_algo).__name__.lower()
         full_id = f'{self.run_id}_{algo_name}'
 
@@ -104,7 +114,7 @@ class ParamInterceptors:
         def intercept(it, losses):
             if (it % skip_steps) >= (skip_steps - 1):
                 print(f'--|-- {algo_name}... ', end='', flush=True)
-                all_encodings = trainer_.network.encoding_prediction(trainer_.data)
+                all_encodings = trainer.network.encoding_prediction(trainer.data)
                 points = reduction_algo.fit_transform(all_encodings)
                 for p_ix, p_position in enumerate(rot_ixs):
                     title = f'{full_id}_pos{p_ix}'
@@ -117,15 +127,15 @@ class ParamInterceptors:
 
         return intercept
 
-    def plot_clusters_on_data(self, trainer_, skip_steps=2):
+    def plot_clusters_on_data(self, trainer, skip_steps=2):
         algo_metas = [(skm.TSNE, 'tsne'), (umap.UMAP, 'umap')]
 
-        all_2d_points = [create_2d_points(*a_meta, trainer_.data) for a_meta in algo_metas]
+        all_2d_points = [create_2d_points(*a_meta, trainer.data) for a_meta in algo_metas]
         print(f'- Done')
 
         def intercept(it, losses):
             if (it % skip_steps) >= (skip_steps - 1):
-                all_encodings = trainer_.network.encoding_prediction(trainer_.data)
+                all_encodings = trainer.network.encoding_prediction(trainer.data)
                 all_color_points = [run_fit_transform(*a_meta, all_encodings) for a_meta in algo_metas]
 
                 for a_meta, xy_points, color_points in zip(algo_metas, all_2d_points, all_color_points):
@@ -138,10 +148,10 @@ class ParamInterceptors:
 
         return intercept
 
-    def plot_encodings_directly(self, trainer_, skip_steps=10):
+    def plot_encodings_directly(self, trainer, skip_steps=10):
         def intercept(it, losses):
             if (it % skip_steps) >= (skip_steps - 1):
-                encodings = trainer_.network.encoding_prediction(trainer_.data)
+                encodings = trainer.network.encoding_prediction(trainer.data)
                 enc_dim = np.shape(encodings)[1]
                 coords = np.multiply(encodings, 255)
 
@@ -179,13 +189,13 @@ class ParamInterceptors:
 
         return intercept
 
-    def save_gene_sample(self, trainer_):
-        encodings_in = convert_to_tensor(permuted_vector(trainer_.network.encoding_size, 2))
-        noise = trainer_.network.random_uniform_vector(len(encodings_in))
+    def save_gene_sample(self, trainer):
+        encodings_in = convert_to_tensor(permuted_vector(trainer.network.encoding_size, 2))
+        noise = trainer.network.random_uniform_vector(len(encodings_in))
 
         def intercept(it, losses):
             if it in [0, 9, 49, 99, 199]:
-                cell_predictions = trainer_.network.generate_cells(encodings_in, noise)
+                cell_predictions = trainer.network.generate_cells(encodings_in, noise)
                 data = backend.eval(cell_predictions)
                 df = pd.DataFrame.from_records(data)
                 df.to_csv(f'{self.log_dir}/{self.run_id}_cells_{str(it).zfill(4)}.csv')

@@ -36,7 +36,7 @@ class CellTrainingTestCase(TFTestCase):
         self.assertDeepEqual(TEST_MATRIX_CONTENT, cell_data)
 
     def test_sample_cell_data(self):
-        sampled = self.trainer._sample_cell_data(0)
+        sampled = self.trainer.sample_cell_data(0)
         self.assertEqual((TEST_BATCH_SIZE, TEST_GENE_COUNT), sampled.shape)
         self.assertDeepEqual([TEST_MATRIX_CONTENT[2],
                               TEST_MATRIX_CONTENT[0],
@@ -50,7 +50,7 @@ class CellTrainingTestCase(TFTestCase):
 
     def test_trainings_run(self):
         test_data, test_losses = ['some', 'data'], (0.7, 0.8, 0.8)
-        self.trainer._sample_cell_data = sample_mock = MagicMock(return_value=test_data)
+        self.trainer.sample_cell_data = sample_mock = MagicMock(return_value=test_data)
         self.trainer.network.trainings_step = trainings_step_mock = MagicMock(return_value=test_losses)
 
         test_iterations = 6

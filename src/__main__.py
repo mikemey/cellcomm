@@ -2,6 +2,8 @@ import os
 import pathlib
 from datetime import datetime
 
+import signal
+
 import sys
 
 from cell_type_training import CellTraining, load_matrix
@@ -38,6 +40,7 @@ def create_interceptors(log_dir_, run_id_, trainer_):
     return combined_interceptor([
         ics.print_losses,
         ics.log_losses(),
+        ics.log_accuracy(trainer_),
         # ics.plot_clusters_on_data(trainer_),
         ics.plot_encodings_directly(trainer_),
         ics.save_gene_sample(trainer_),
@@ -77,7 +80,13 @@ def store_converted_cell_file(matrix_file, cell_file):
     print('done')
 
 
+def signal_handler(_, __):
+    print('\tstopped')
+    sys.exit(0)
+
+
 if __name__ == '__main__':
+    signal.signal(signal.SIGINT, signal_handler)
     if len(sys.argv) > 1:
         cmd = sys.argv[1]
         if cmd == 'convert':
