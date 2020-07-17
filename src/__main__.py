@@ -6,7 +6,7 @@ from datetime import datetime
 import sys
 
 from cell_type_training import CellTraining, load_matrix
-from training_interceptors import ParamInterceptors, combined_interceptor, skip_iterations
+from training_interceptors import ParamInterceptors, combined_interceptor, skip_iterations, offset_iterations
 
 
 def data_file(data_file_):
@@ -38,11 +38,11 @@ def create_interceptors(log_dir_, run_id_, trainer_):
     ics = ParamInterceptors(log_dir_, run_id_)
     return combined_interceptor([
         ics.print_losses,
-        # ics.save_losses(),
-        # skip_iterations(ics.save_accuracy(trainer_), 1),
+        ics.save_losses(),
+        offset_iterations(500, skip_iterations(5, ics.save_accuracy(trainer_))),
         # ics.plot_clusters_on_data(trainer_),
-        # skip_iterations(ics.plot_encodings_directly(trainer_), 100),
-        ics.save_encodings(trainer_),
+        # skip_iterations(100, ics.plot_encodings_directly(trainer_)),
+        offset_iterations(5000, skip_iterations(10, ics.save_encodings(trainer_))),
         # lambda _, __: print('-|')
     ])
 
@@ -54,12 +54,12 @@ def check_log_dir(log_dir_):
     log_path.mkdir(parents=True)
 
 
-RUN_ID_TEMPLATE = '{}_TAC4-acc-log-e_{}'
+RUN_ID_TEMPLATE = '{}_TAC4-vlr50000-e_{}'
 
 
 def run_training(source_file=MATRIX_FILES[1], batch_size=128):
     data_source = load_matrix(data_file(source_file), verbose=True)
-    for encoding_size in range(3, 4):
+    for encoding_size in range(3, 5):
         now = datetime.now().strftime('%m-%d-%H%M')
         run_id = RUN_ID_TEMPLATE.format(now, encoding_size)
         log_dir = log_file(run_id)
@@ -68,7 +68,7 @@ def run_training(source_file=MATRIX_FILES[1], batch_size=128):
         trainer = CellTraining(data_source, batch_size=batch_size, encoding_size=encoding_size)
         # trainer.network.summary()
         interceptors = create_interceptors(log_dir, run_id, trainer)
-        trainer.run(99990, interceptor=interceptors)
+        trainer.run(50000, interceptor=interceptors)
 
 
 def store_converted_cell_file(matrix_file, cell_file):

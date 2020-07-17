@@ -26,9 +26,17 @@ def combined_interceptor(interceptors):
     return call_all
 
 
-def skip_iterations(interceptor, steps):
+def skip_iterations(steps, interceptor):
     def intercept(it, losses):
         if (it % steps) >= (steps - 1):
+            interceptor(it, losses)
+
+    return intercept
+
+
+def offset_iterations(offset, interceptor):
+    def intercept(it, losses):
+        if it >= offset:
             interceptor(it, losses)
 
     return intercept
