@@ -1,3 +1,5 @@
+import pathlib
+import pickle
 from datetime import datetime
 
 import atexit
@@ -48,12 +50,17 @@ class ParamInterceptors:
         self.sink = DataSink(log_dir=self.log_dir)
         atexit.register(self.sink.drain_data)
 
+        self.plots_dir = f'{self.log_dir}/plots'
+        self.encodings_dir = f'{self.log_dir}/encodings'
+        for d in [self.plots_dir, self.encodings_dir]:
+            pathlib.Path(d).mkdir()
+
     def print_losses(self, it, all_losses):
         g_loss, e_loss, d_loss = all_losses
         ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         print(f'[{ts}] {self.run_id} it: {it:6}  TOT: {sum(all_losses):6.3f}  G-L: {g_loss:6.3f}  E-L: {e_loss:6.3f}  D-L: {d_loss:6.3f}')
 
-    def log_losses(self):
+    def save_losses(self):
         graph_id = 'losses'
         self.sink.add_graph_header(graph_id, ['iteration', 'total-loss', 'g-loss', 'e-loss', 'd-loss'])
 
@@ -63,7 +70,7 @@ class ParamInterceptors:
 
         return store_record
 
-    def log_accuracy(self, trainer: CellTraining):
+    def save_accuracy(self, trainer: CellTraining):
         graph_id = 'accuracy'
         self.sink.add_graph_header(graph_id, ['iteration', 'pos-pct', 'neg-pct'])
 
@@ -75,8 +82,16 @@ class ParamInterceptors:
 
         return intercept
 
+    def save_encodings(self, trainer: CellTraining):
+        def intercept(it, _):
+            encodings = trainer.network.encoding_prediction(trainer.data)
+            with open(f'{self.encodings_dir}/{it}.enc', 'wb') as f:
+                pickle.dump(encodings, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+        return intercept
+
     def __figure_path(self, title, iteration):
-        return f'{self.log_dir}/{title}_{str(iteration).zfill(4)}.png'
+        return f'{self.plots_dir}/{title}_{str(iteration).zfill(4)}.png'
 
     def plot_fully(self, trainer, reduction_algo, show_plot=False, save_plot=True, name=''):
         algo_name = type(reduction_algo).__name__.lower() + name

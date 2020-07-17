@@ -38,11 +38,11 @@ def create_interceptors(log_dir_, run_id_, trainer_):
     ics = ParamInterceptors(log_dir_, run_id_)
     return combined_interceptor([
         ics.print_losses,
-        ics.log_losses(),
-        skip_iterations(ics.log_accuracy(trainer_), 10),
+        # ics.save_losses(),
+        # skip_iterations(ics.save_accuracy(trainer_), 1),
         # ics.plot_clusters_on_data(trainer_),
-        skip_iterations(ics.plot_encodings_directly(trainer_), 100),
-        # ics.save_gene_sample(trainer_),
+        # skip_iterations(ics.plot_encodings_directly(trainer_), 100),
+        ics.save_encodings(trainer_),
         # lambda _, __: print('-|')
     ])
 
@@ -54,7 +54,7 @@ def check_log_dir(log_dir_):
     log_path.mkdir(parents=True)
 
 
-RUN_ID_TEMPLATE = '{}_TAC4-LR9990-e_{}'
+RUN_ID_TEMPLATE = '{}_TAC4-acc-log-e_{}'
 
 
 def run_training(source_file=MATRIX_FILES[1], batch_size=128):
@@ -68,7 +68,7 @@ def run_training(source_file=MATRIX_FILES[1], batch_size=128):
         trainer = CellTraining(data_source, batch_size=batch_size, encoding_size=encoding_size)
         # trainer.network.summary()
         interceptors = create_interceptors(log_dir, run_id, trainer)
-        trainer.run(9990, interceptor=interceptors)
+        trainer.run(99990, interceptor=interceptors)
 
 
 def store_converted_cell_file(matrix_file, cell_file):

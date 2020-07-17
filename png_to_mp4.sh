@@ -14,7 +14,7 @@ image_ids=(
 function convert_to_mp4 () {
     run_id="$1"
     unique_img_id="$2"
-    search_query="logs/${run_id}/*${unique_img_id}*"
+    search_query="logs/${run_id}/plots/*${unique_img_id}*"
 
     files=`ls -1 ${search_query} 2> /dev/null`
     if [[ -z ${files} ]]; then
