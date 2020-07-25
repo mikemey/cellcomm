@@ -1,5 +1,6 @@
-const createServer = require('./backend')
+const CellanServer = require('./backend')
 
-createServer().then(() => {
+const server = new CellanServer()
+server.start().then(() => {
   console.log('server started')
 })
