@@ -57,7 +57,14 @@ def convert_matrix(barcodes_, genes_, matrix_):
             'v': int(p_val)
         })
     print('DONE')
+
+    sort_cell_genes_by_value(cells)
     return cells
+
+
+def sort_cell_genes_by_value(cells):
+    for cell in cells:
+        cell['g'].sort(key=lambda gene: gene['v'], reverse=True)
 
 
 def get_line_num(arr, line_num):
