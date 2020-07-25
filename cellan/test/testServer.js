@@ -5,14 +5,13 @@ const CellanServer = require('../backend')
 const testConfig = {
   port: 13014,
   interface: '127.0.0.1',
-  staticOptions: { maxAge: 0 },
   serverPath: '/cellan-test',
-  defaultEncodingIt: 123,
+  defaultEncoding: 123,
   mongodb: {
     url: 'mongodb://127.0.0.1:27017',
     dbName: 'cellcomm-test',
     cellsColl: 'cells',
-    encodingsColls: 'encs'
+    encodingsColl: 'encs'
   }
 }
 
@@ -36,7 +35,7 @@ class TestServer extends CellanServer {
   }
 
   insertEncodings (data) {
-    return this.testDb.collection(testConfig.mongodb.encodingsColls).insertMany(data)
+    return this.testDb.collection(testConfig.mongodb.encodingsColl).insertMany(data)
   }
 
   insertCells (data) {

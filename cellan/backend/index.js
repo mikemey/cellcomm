@@ -1,3 +1,4 @@
+const path = require('path')
 const express = require('express')
 const { MongoClient } = require('mongodb')
 
@@ -6,20 +7,40 @@ const defaultConfig = {
   interface: '0.0.0.0',
   serverPath: '/cellan',
   defaultEncoding: 9219,
-  staticOptions: { maxAge: 86400000 },
   mongodb: {
     url: 'mongodb://127.0.0.1:27017',
     dbName: 'cellcomm',
-    cellsColl: 'cells'
+    cellsColl: 'cells',
+    encodingsColl: 'encs'
   }
 }
 
-const createCellRouter = cellsCollection => {
+const sendFrontendFile = (res, fileName) => res.sendFile(path.join(__dirname, '..', 'frontend', fileName))
+
+const createMainPageRouter = (encodingsColl, config) => {
+  const router = express.Router()
+  const defaultPath = `${config.serverPath}/${config.defaultEncoding}`
+
+  router.get('/:enc?', (req, res) => {
+    const redirectToDefault = () => res.redirect(303, defaultPath)
+    return req.params.enc
+      ? encodingsColl.findOne({ _id: req.params.enc })
+        .then(ret => ret
+          ? sendFrontendFile(res, 'index.html')
+          : sendFrontendFile(res, 'error.html')
+        )
+      : redirectToDefault()
+  })
+
+  return router
+}
+
+const createCellRouter = cellsColl => {
   const router = express.Router()
 
   router.get('/cell/:id', (req, res) => {
     const cellId = req.params.id
-    return cellsCollection.find({ _id: cellId }).toArray()
+    return cellsColl.find({ _id: cellId }).toArray()
       .then(cellData => res.status(200).send(cellData))
   })
 
@@ -40,11 +61,15 @@ class CellanServer {
         this.client = client
         return client.db(this.cfg.mongodb.dbName)
       })
-      .then(db => db.collection(this.cfg.mongodb.cellsColl))
-      .then(cellsCollection => {
+      .then(db => Promise.all([
+        db.collection(this.cfg.mongodb.encodingsColl),
+        db.collection(this.cfg.mongodb.cellsColl)
+      ]))
+      .then(([encodingsColl, cellsColl]) => {
         const app = express()
-        app.use(`${this.cfg.serverPath}`, express.static('frontend/', this.cfg.staticOptions))
-        app.use(`${this.cfg.serverPath}/api`, createCellRouter(cellsCollection))
+
+        app.use(`${this.cfg.serverPath}/api`, createCellRouter(cellsColl))
+        app.use(`${this.cfg.serverPath}`, createMainPageRouter(encodingsColl, this.cfg))
 
         this.server = app.listen(this.cfg.port, this.cfg.interface)
         return app
