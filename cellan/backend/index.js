@@ -41,7 +41,7 @@ const createStaticRouter = () => {
   return router
 }
 
-const createCellRouter = cellsColl => {
+const createApiRouter = (encodingsColl, cellsColl) => {
   const router = express.Router()
 
   router.get('/cell/:id', (req, res) => {
@@ -50,6 +50,14 @@ const createCellRouter = cellsColl => {
       .then(cellData => res.status(200).send(cellData))
   })
 
+  router.get('/encoding/:id', (req, res) => {
+    const encodingId = req.params.id
+    return encodingsColl.findOne({ _id: encodingId })
+      .then(encData => encData
+        ? res.status(200).send(encData)
+        : res.status(404).end()
+      )
+  })
   return router
 }
 
@@ -74,7 +82,7 @@ class CellanServer {
       .then(([encodingsColl, cellsColl]) => {
         const app = express()
 
-        app.use(`${this.cfg.serverPath}/api`, createCellRouter(cellsColl))
+        app.use(`${this.cfg.serverPath}/api`, createApiRouter(encodingsColl, cellsColl))
         app.use(`${this.cfg.serverPath}`, createStaticRouter())
         app.use(`${this.cfg.serverPath}`, createMainPageRouter(encodingsColl, this.cfg))
 
