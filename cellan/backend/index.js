@@ -46,8 +46,11 @@ const createApiRouter = (encodingsColl, cellsColl) => {
 
   router.get('/cell/:id', (req, res) => {
     const cellId = req.params.id
-    return cellsColl.find({ _id: cellId }).toArray()
-      .then(cellData => res.status(200).send(cellData))
+    return cellsColl.findOne({ _id: cellId })
+      .then(cellData => cellData
+        ? res.status(200).send(cellData)
+        : res.status(404).end()
+      )
   })
 
   router.get('/encoding/:id', (req, res) => {

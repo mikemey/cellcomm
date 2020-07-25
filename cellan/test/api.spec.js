@@ -35,4 +35,12 @@ describe('cellan server', () => {
       .expect(200, testEncodings[2])
     )
   })
+
+  describe('cells', () => {
+    it('invalid cell-id -> 404', () => requestCell('5').expect(404))
+
+    it('valid cell-id -> returns cell', () => requestCell('3')
+      .expect(200, testCells[2])
+    )
+  })
 })
