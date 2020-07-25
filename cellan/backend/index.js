@@ -25,15 +25,17 @@ const createCellRouter = cellCollection => {
   return router
 }
 
-MongoClient.connect(config.mongodb.url, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(client => client.db(config.mongodb.dbName))
-  .then(db => db.collection(config.mongodb.cellColl))
-  .then(cellCollection => {
-    const app = express()
-    app.use(`${config.serverPath}`, express.static('frontend/', config.staticOptions))
-    app.use(`${config.serverPath}/api`, createCellRouter(cellCollection))
+const createServer = () => new Promise(resolve => {
+  MongoClient.connect(config.mongodb.url, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(client => client.db(config.mongodb.dbName))
+    .then(db => db.collection(config.mongodb.cellColl))
+    .then(cellCollection => {
+      const app = express()
+      app.use(`${config.serverPath}`, express.static('frontend/', config.staticOptions))
+      app.use(`${config.serverPath}/api`, createCellRouter(cellCollection))
 
-    app.listen(config.port, config.interface, () => {
-      console.log('server started')
+      app.listen(config.port, config.interface, resolve)
     })
-  })
+})
+
+module.exports = createServer
