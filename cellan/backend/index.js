@@ -35,6 +35,12 @@ const createMainPageRouter = (encodingsColl, config) => {
   return router
 }
 
+const createStaticRouter = () => {
+  const router = express.Router()
+  router.get('/index.:ext', (req, res) => sendFrontendFile(res, `index.${req.params.ext}`))
+  return router
+}
+
 const createCellRouter = cellsColl => {
   const router = express.Router()
 
@@ -69,6 +75,7 @@ class CellanServer {
         const app = express()
 
         app.use(`${this.cfg.serverPath}/api`, createCellRouter(cellsColl))
+        app.use(`${this.cfg.serverPath}`, createStaticRouter())
         app.use(`${this.cfg.serverPath}`, createMainPageRouter(encodingsColl, this.cfg))
 
         this.server = app.listen(this.cfg.port, this.cfg.interface)
