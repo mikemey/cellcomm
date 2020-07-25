@@ -10,15 +10,15 @@ describe('cellan server', () => {
   const requestCell = id => server.request().get(`${path}/api/cell/${id}`)
 
   const testEncodings = [
-    { _id: '5009', points: [{ id: 1, name: 'AAACGGGTCTGATTCT-1', x: 1, y: 1, z: 1 }] },
-    { _id: '5019', points: [{ id: 1, name: 'AAACGGGTCTGATTCT-1', x: 1, y: 1, z: 1 }] },
-    { _id: '5029', points: [{ id: 1, name: 'AAACGGGTCTGATTCT-1', x: 29, y: 29, z: 29 }] }
+    { _id: '5009', points: [{ id: 1, n: 'AAACGGGTCTGATTCT-1', x: 1, y: 1, z: 1 }] },
+    { _id: '5019', points: [{ id: 1, n: 'AAACGGGTCTGATTCT-1', x: 1, y: 1, z: 1 }] },
+    { _id: '5029', points: [{ id: 1, n: 'AAACGGGTCTGATTCT-1', x: 29, y: 29, z: 29 }] }
   ]
 
   const testCells = [
-    { _id: '1', name: 'AAACGGGTCTGATTCT-1', genes: [1] },
-    { _id: '2', name: 'AAACGGGTCTGATTCT-2', genes: [2] },
-    { _id: '3', name: 'AAACGGGTCTGATTCT-3', genes: [3] }
+    { _id: '1', n: 'AAACGGGTCTGATTCT-1', g: [1] },
+    { _id: '2', n: 'AAACGGGTCTGATTCT-2', g: [2] },
+    { _id: '3', n: 'AAACGGGTCTGATTCT-3', g: [3] }
   ]
 
   before(() => server.start()
