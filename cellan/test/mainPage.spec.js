@@ -8,11 +8,7 @@ describe('Main page + static resources', () => {
 
   const requestMainPage = id => server.request().get(`${path}${id}`)
 
-  const testEncodings = [
-    { _id: '5009', points: [{ name: 'AAACGGGTCTGATTCT-1', x: 1, y: 1, z: 1 }] },
-    { _id: '5019', points: [{ name: 'AAACGGGTCTGATTCT-1', x: 1, y: 1, z: 1 }] },
-    { _id: '5029', points: [{ name: 'AAACGGGTCTGATTCT-1', x: 29, y: 29, z: 29 }] }
-  ]
+  const testEncodings = [{ _id: '5009' }, { _id: '5019' }, { _id: '5029' }]
 
   before(() => server.start()
     .then(() => server.insertEncodings(testEncodings))
