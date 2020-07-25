@@ -1,4 +1,10 @@
+/* global $ Plotly */
+
+const iterations = Array.from({ length: 450 }, (_, ix) => 5009 + ix * 100)
+
 $(() => {
+  loadIterationsSelect()
+
   const service = new BackendService()
   const graphDiv = $('#cell-graph').get(0)
 
@@ -17,9 +23,24 @@ $(() => {
   graphDiv.on('plotly_click', ev => showCell(ev.points[0]))
 })
 
+const loadIterationsSelect = () => {
+  const select = $('#iteration')
+  select.empty()
+  iterations.forEach(it => select.append(`<option>${it}</option>`))
+
+  $('#iterations-btn').click(() => {
+    console.log('hello!', select.find(':selected').text())
+  })
+  // const encodingId = $(this).attr('href').split('/').slice(-1).pop()
+  // select.val(encodingId)
+}
+
 const createScatterPoints = point => {
   return {
-    text: [`${point.name}`], x: [point.x], y: [point.y], z: [point.z],
+    text: [`${point.name}`],
+    x: [point.x],
+    y: [point.y],
+    z: [point.z],
     mode: 'markers',
     type: 'scattergl',
     hoverinfo: 'text',
@@ -60,8 +81,8 @@ class BackendService {
       }
     })
   }
+
   getCells () {
     return this.cells
   }
 }
-

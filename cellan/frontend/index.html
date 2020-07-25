@@ -13,6 +13,13 @@
     body {
       font-size: 12px;
     }
+    select#iteration {
+      font-size: 12px;
+    }
+
+
+
+
   </style>
 </head>
 
@@ -21,6 +28,19 @@
   <div class="row">
     <div id="cell-graph" class="col-9 min-vh-100"></div>
     <div class="col-3">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="form-group col-7 m-1">
+            <select id="iteration" class="form-control form-control-sm">
+              <option>loading...</option>
+            </select>
+          </div>
+          <div class="form-group col m-1">
+            <button id="iterations-btn" type="submit" class="btn btn-sm btn-success">go...</button>
+          </div>
+        </div>
+      </div>
+
       <table class="table table-sm">
         <thead>
         <tr>
