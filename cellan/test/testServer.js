@@ -7,6 +7,7 @@ const testConfig = {
   interface: '127.0.0.1',
   staticOptions: { maxAge: 0 },
   serverPath: '/cellan-test',
+  defaultEncodingIt: 123,
   mongodb: {
     url: 'mongodb://127.0.0.1:27017',
     dbName: 'cellcomm-test',

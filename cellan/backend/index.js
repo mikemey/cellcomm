@@ -5,6 +5,7 @@ const defaultConfig = {
   port: 13013,
   interface: '0.0.0.0',
   serverPath: '/cellan',
+  defaultEncoding: 9219,
   staticOptions: { maxAge: 86400000 },
   mongodb: {
     url: 'mongodb://127.0.0.1:27017',

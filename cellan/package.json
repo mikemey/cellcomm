@@ -9,7 +9,7 @@
     "prestart": "npm install",
     "start": "node index.js",
     "lint": "standard",
-    "specs": "mocha 'test/**/**.spec.js'",
+    "specs": "mocha 'test/**/**.spec.js' -r chai/register-should",
     "~specs": "nodemon -x 'npm run specs -s'",
     "test": "npm run lint -s && npm run specs -s"
   },
@@ -24,6 +24,7 @@
     "mongodb": "^3.5.9"
   },
   "devDependencies": {
+    "chai": "4.2.0",
     "mocha": "^8.0.1",
     "nodemon": "^2.0.4",
     "standard": "^14.3.4",

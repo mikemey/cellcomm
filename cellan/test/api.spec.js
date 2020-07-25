@@ -1,7 +1,7 @@
 /* global describe it before after */
 const TestServer = require('./testServer')
 
-describe('cellan API', () => {
+describe('cellan server', () => {
   const server = new TestServer()
 
   const path = server.cfg.serverPath
@@ -29,14 +29,25 @@ describe('cellan API', () => {
 
   after(() => server.stop())
 
-  describe('encodings', () => {
-    it('redirects to default-encoding page', () => {
-      return requestMainPage('')
-        // .expect(301)
-        .then(response => {
-          console.log(response.text)
-          // return requestApi().expect(200, version)
+  describe('main page', () => {
+    it('no encoding-id -> redirect to default-page', () => {
+      return requestMainPage('/')
+        .expect(303)
+        .expect('Location', `${server.cfg.serverPath}/${server.cfg.defaultEncoding}`)
+    })
+
+    it('invalid encoding-id -> respond with error page', () => {
+      return requestMainPage('/999')
+        .expect(200)
+        .then(resp => {
+          resp.text.should.contain('Encoding not found: 999')
         })
+    })
+
+    it('valid encoding-id -> respond with main page', () => {
+      return requestMainPage('/5009')
+        .expect(200)
+        .then(resp => resp.text.should.include('id="cell-graph"'))
     })
   })
 })
