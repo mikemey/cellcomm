@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
-import sys
-import json
 import os
 
-OUTPUT_SUFFIX = 'coll.json'
+import sys
+from pymongo import MongoClient
+
 BARCODES_SUFFIX = 'barcodes.tsv'
 GENES_SUFFIX = 'genes.tsv'
 MATRIX_SUFFIX = 'matrix.mtx'
 
-print()
+MONGO_URL = 'mongodb://localhost:27017/'
+MONGO_DB = 'cellcomm'
+MONGO_COLLECTION = 'cells'
+
 if len(sys.argv) < 2:
     print('parameter for matrix file missing!')
     exit(-1)
@@ -17,21 +20,14 @@ matrix_file = sys.argv[1]
 sample_id = matrix_file.rstrip(MATRIX_SUFFIX)
 genes_file = sample_id + GENES_SUFFIX
 barcodes_file = sample_id + BARCODES_SUFFIX
-output_file = sample_id + OUTPUT_SUFFIX
 
 for in_file in [matrix_file, genes_file, barcodes_file]:
     if not os.path.exists(in_file):
         print('required file not found:', in_file)
         exit(-2)
 
-if os.path.exists(output_file):
-    overwrite = input(f'output file exists: "{output_file}", overwrite? [y/n] ').lower()
-    if overwrite != 'y':
-        print('aborted.')
-        exit(0)
 
-
-def import_file(file, converter, skip=0):
+def load_file(file, converter, skip=0):
     result = []
     print(f'read "{file}" ... ', end='', flush=True)
     with open(file) as f:
@@ -49,42 +45,44 @@ def convert_matrix(barcodes_, genes_, matrix_):
             current_id = barcode_line_num
             cell_record = {
                 '_id': barcode_line_num,
-                'name': get_line_num(barcodes_, barcode_line_num),
-                'genes': []
+                'n': get_line_num(barcodes_, barcode_line_num),
+                'g': []
             }
             cells.append(cell_record)
 
         gene_symbols = get_line_num(genes_, gene_line_num)
-        cell_record['genes'].append({
-            'ensembl': gene_symbols[0],
-            'mgi': gene_symbols[1],
-            'pval': int(p_val)
+        cell_record['g'].append({
+            'e': gene_symbols[0],
+            'm': gene_symbols[1],
+            'v': int(p_val)
         })
     print('DONE')
     return cells
 
 
-def get_line_num(arr, ix):
+def get_line_num(arr, line_num):
     """ Barcode + genes references are 1-based
     """
-    return arr[int(ix) - 1]
+    return arr[int(line_num) - 1]
 
 
-def store_json(cell_json):
-    print(f'saving json ... ', end='', flush=True)
-    with open(output_file, 'w') as outfile:
-        json.dump(cell_json, outfile)
+def import_cells(cell_json):
+    print(f'importing cells ... ', end='', flush=True)
+    client = MongoClient(MONGO_URL)
+    cells_coll = client[MONGO_DB][MONGO_COLLECTION]
+    cells_coll.insert_many(cell_json)
+    client.close()
     print('DONE')
 
 
 if __name__ == '__main__':
-    barcodes = import_file(barcodes_file, lambda line: line.strip())
-    genes = import_file(genes_file, lambda line: line.strip().split('\t'))
-    matrix = import_file(matrix_file, lambda line: line.strip().split(' '), skip=3)
+    barcodes = load_file(barcodes_file, lambda line: line.strip())
+    genes = load_file(genes_file, lambda line: line.strip().split('\t'))
+    matrix = load_file(matrix_file, lambda line: line.strip().split(' '), skip=3)
 
     print('barcodes:', len(barcodes))
     print('genes:', len(genes))
     print('matrix:', len(matrix))
 
     cell_data = convert_matrix(barcodes, genes, matrix)
-    store_json(cell_data)
+    import_cells(cell_data)
