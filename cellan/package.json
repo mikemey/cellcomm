@@ -10,6 +10,7 @@
     "start": "node index.js",
     "lint": "standard",
     "specs": "mocha 'test/**/**.spec.js'",
+    "~specs": "nodemon -x 'npm run specs -s'",
     "test": "npm run lint -s && npm run specs -s"
   },
   "repository": {
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "mocha": "^8.0.1",
+    "nodemon": "^2.0.4",
     "standard": "^14.3.4",
     "supertest": "^4.0.2"
   },
