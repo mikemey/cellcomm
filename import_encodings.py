@@ -18,7 +18,7 @@ MONGO_COLLECTION = 'encs'
 
 run_id = sys.argv[1]
 barcode_file = sys.argv[2]
-encodings_dir = f'{run_id}/logs/encodings'
+encodings_dir = f'logs/{run_id}/encodings'
 
 
 def load_coords(iteration_):
@@ -69,10 +69,7 @@ if __name__ == '__main__':
 
     for ix, iteration in enumerate(iterations):
         enc_num = ix + 1
-        print(f'\rprocessing encoding {enc_num}/{size}: load... ', end='')
+        print(f'\rprocessing encoding {enc_num}/{size}... ', end='')
         coords = load_coords(iteration)
-        print(f'import... ', end='')
         importer.insert_coords(iteration, coords)
-        if enc_num < size:
-            print('\r', ' ' * 80, end='')
     print('\nDONE')
