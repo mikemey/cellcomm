@@ -15,12 +15,12 @@ const display = {
 
 $(() => {
   const encodingId = loadIterationsSelect()
+  return getEncodings(encodingId)
+    .then(encodings => {
+      const graphDiv = $('#cell-graph').get(0)
+      const markers = createMarkers(encodings)
 
-  const graphDiv = $('#cell-graph').get(0)
-  return getEncoding(encodingId)
-    .then(result => {
-      const points = result.points.map(createScatterPoints)
-      Plotly.newPlot(graphDiv, points, layout, display)
+      Plotly.newPlot(graphDiv, markers, layout, display)
       graphDiv.on('plotly_click', ev => showCellDetails(ev.points[0]))
     })
 })
@@ -40,22 +40,25 @@ const loadIterationsSelect = () => {
   return encodingId
 }
 
-const createScatterPoints = point => {
-  return {
-    id: point.id,
-    text: [`${point.id}<br>${point.n}`],
-    x: [point.x],
-    y: [point.y],
-    z: [point.z],
+const createMarkers = encodings => {
+  const text = encodings.ns.map((name, ix) => `${encodings.pids[ix]}<br>${name}`)
+  return [{
+    ids: encodings.pids,
+    text,
+    x: encodings.xs,
+    y: encodings.ys,
     mode: 'markers',
     type: 'scattergl',
     hoverinfo: 'text',
-    colorscale: 'Jet',
-    marker: { size: 2 }
-  }
+    marker: {
+      size: 4,
+      color: encodings.zs,
+      colorscale: 'Jet'
+    }
+  }]
 }
 
-const showCellDetails = point => getCell(point.data.id)
+const showCellDetails = point => getCell(point.data.ids[point.pointIndex])
   .then(cell => {
     $('#cell-id').text(cell.n)
     const genesTable = $('#cell-genes')
@@ -70,37 +73,31 @@ const showCellDetails = point => getCell(point.data.id)
     })
   })
 
-const getEncoding = id => $.get(`api/encoding/${id}`)
-const getCell = id => $.get(`api/cell/${id}`)
+// const getEncodings = id => $.get(`api/encoding/${id}`)
+// const getCell = id => $.get(`api/cell/${id}`)
 
-// const template = Array(200)
-// const testPoints = Array.from(template.keys()).map(id => {
-//   return {
-//     id,
-//     n: `${id}`.repeat(6),
-//     x: Math.floor(Math.random() * 255),
-//     y: Math.floor(Math.random() * 255),
-//     z: Math.floor(Math.random() * 255)
-//   }
-// })
+const template = Array(255)
+const testPointIds = Array.from(template.keys()).map(id => id)
+const testNames = Array.from(template.keys()).map(id => `${id}`.repeat(6))
+const testCoords = Array.from(template.keys())
 
-// const testCells = Array.from(template.keys()).map(id => {
-//   return {
-//     _id: id,
-//     n: `${id}`.repeat(6),
-//     g: [
-//       { e: 'ENSMUSG00000089699', m: 'Gm1992', v: id },
-//       { e: 'ENSMUSG00000102343', m: 'Gm37381', v: 4 },
-//       { e: 'ENSMUSG00000025900', m: 'Rp1', v: 1 }
-//     ]
-//   }
-// })
+const testCells = Array.from(template.keys()).map(id => {
+  return {
+    _id: id,
+    n: `${id}`.repeat(6),
+    g: [
+      { e: 'ENSMUSG00000089699', m: 'Gm1992', v: id },
+      { e: 'ENSMUSG00000102343', m: 'Gm37381', v: 4 },
+      { e: 'ENSMUSG00000025900', m: 'Rp1', v: 1 }
+    ]
+  }
+})
 
-// const getEncoding = id => {
-//   console.log('loading encodings:', id)
-//   return Promise.resolve({ _id: id, points: testPoints })
-// }
-// const getCell = id => {
-//   console.log('loading cell:', id)
-//   return Promise.resolve(testCells.find(cell => cell._id === id))
-// }
+const getEncodings = id => {
+  console.log('loading encodings:', id)
+  return Promise.resolve({ _id: id, pids: testPointIds, ns: testNames, xs: testCoords, ys: testCoords, zs: testCoords })
+}
+const getCell = id => {
+  console.log('loading cell:', id)
+  return Promise.resolve(testCells.find(cell => cell._id === id))
+}

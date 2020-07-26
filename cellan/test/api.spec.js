@@ -10,9 +10,9 @@ describe('cellan server', () => {
   const requestCell = id => server.request().get(`${path}/api/cell/${id}`)
 
   const testEncodings = [
-    { _id: '5009', points: [{ id: 1, n: 'AAACGGGTCTGATTCT-1', x: 1, y: 1, z: 1 }] },
-    { _id: '5019', points: [{ id: 1, n: 'AAACGGGTCTGATTCT-1', x: 1, y: 1, z: 1 }] },
-    { _id: '5029', points: [{ id: 1, n: 'AAACGGGTCTGATTCT-1', x: 29, y: 29, z: 29 }] }
+    { _id: '5009', pids: [1, 2, 3] },
+    { _id: '5019', pids: [1, 2, 3] },
+    { _id: '5029', pids: [1, 2, 3] }
   ]
 
   const testCells = [
