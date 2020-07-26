@@ -66,9 +66,10 @@ const createMarkers = encodings => {
 
 const showCellDetails = point => {
   showLoader()
-  return getCell(point.data.ids[point.pointIndex])
+  const cellId = point.data.ids[point.pointIndex]
+  return getCell(cellId)
     .then(cell => {
-      $('#cell-id').text(cell.n)
+      $('#cell-id').text(`${cell.n} (${cellId})`)
       const genesTable = $('#cell-genes')
       const template = $('.gene').first()
       genesTable.empty()
