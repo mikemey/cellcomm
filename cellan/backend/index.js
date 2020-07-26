@@ -6,7 +6,7 @@ const defaultConfig = {
   port: 13013,
   interface: '0.0.0.0',
   serverPath: '/cellan',
-  defaultEncoding: 9209,
+  defaultEncoding: 12209,
   mongodb: {
     url: 'mongodb://127.0.0.1:27017',
     dbName: 'cellcomm',
