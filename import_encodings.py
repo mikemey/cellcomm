@@ -42,23 +42,25 @@ class DBImporter:
         self.barcodes = load_barcodes()
 
     def insert_coords(self, iteration_, coords_):
+        ids, names = self.__create_point_meta(coords_)
         encoding = {
             '_id': iteration_,
-            'points': self.__convert_coords(coords_)
+            'pids': ids,
+            'ns': names,
+            'xs': coords_[:, 0].tolist(),
+            'ys': coords_[:, 1].tolist(),
+            'zs': coords_[:, 2].tolist()
         }
         self.encodings_coll.insert_one(encoding)
 
-    def __convert_coords(self, coords_):
-        points = []
-        for i, (point, barcode) in enumerate(zip(coords_, self.barcodes)):
-            points.append({
-                'id': i + 1,
-                'n': barcode,
-                'x': point[0].item(),
-                'y': point[1].item(),
-                'z': point[2].item()
-            })
-        return points
+    def __create_point_meta(self, coords_):
+        if len(self.barcodes) != len(coords_):
+            raise ValueError(f'Coordinates-/barcode-data different length: {len(self.barcodes)} != {len(coords_)}')
+        point_ids, point_names = [], []
+        for i, barcode in enumerate(self.barcodes):
+            point_ids.append(i + 1)
+            point_names.append(barcode)
+        return point_ids, point_names
 
 
 if __name__ == '__main__':
