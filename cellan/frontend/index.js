@@ -22,21 +22,27 @@ $(() => {
 
       Plotly.newPlot(graphDiv, markers, layout, display)
       graphDiv.on('plotly_click', ev => showCellDetails(ev.points[0]))
+      graphDiv.on('plotly_afterplot', hideLoader)
     })
 })
 
 const loadIterationsSelect = () => {
-  $('#iterations-btn').click(() => {
-    const encodingId = select.find(':selected').text()
-    location.href = `${encodingId}`
-  })
-
-  const select = $('#iteration')
-  select.empty()
-  iterations.forEach(it => select.append(`<option>${it}</option>`))
+  const iterationSelect = $('#iterations')
+  iterationSelect.empty()
+  iterations.forEach(it => iterationSelect.append(`<option>${it}</option>`))
 
   const encodingId = $(location).attr('href').split('/').slice(-1).pop()
-  select.val(encodingId)
+  iterationSelect.val(encodingId)
+
+  const goButton = $('#iterations-btn')
+  iterationSelect.change(() => {
+    goButton.removeAttr('disabled')
+  })
+  goButton.attr('disabled', '')
+  goButton.click(() => {
+    const encodingId = iterationSelect.find(':selected').text()
+    location.href = `${encodingId}`
+  })
   return encodingId
 }
 
@@ -58,46 +64,27 @@ const createMarkers = encodings => {
   }]
 }
 
-const showCellDetails = point => getCell(point.data.ids[point.pointIndex])
-  .then(cell => {
-    $('#cell-id').text(cell.n)
-    const genesTable = $('#cell-genes')
-    const template = $('.gene').first()
-    genesTable.empty()
-    cell.g.forEach(gene => {
-      const geneRow = template.clone()
-      geneRow.find('.ensemble').text(gene.e)
-      geneRow.find('.mgi').text(gene.m)
-      geneRow.find('.pval').text(gene.v)
-      genesTable.append(geneRow)
+const showCellDetails = point => {
+  showLoader()
+  return getCell(point.data.ids[point.pointIndex])
+    .then(cell => {
+      $('#cell-id').text(cell.n)
+      const genesTable = $('#cell-genes')
+      const template = $('.gene').first()
+      genesTable.empty()
+      cell.g.forEach(gene => {
+        const geneRow = template.clone()
+        geneRow.find('.ensemble').text(gene.e)
+        geneRow.find('.mgi').text(gene.m)
+        geneRow.find('.pval').text(gene.v)
+        genesTable.append(geneRow)
+      })
     })
-  })
-
-// const getEncodings = id => $.get(`api/encoding/${id}`)
-// const getCell = id => $.get(`api/cell/${id}`)
-
-const template = Array(255)
-const testPointIds = Array.from(template.keys()).map(id => id)
-const testNames = Array.from(template.keys()).map(id => `${id}`.repeat(6))
-const testCoords = Array.from(template.keys())
-
-const testCells = Array.from(template.keys()).map(id => {
-  return {
-    _id: id,
-    n: `${id}`.repeat(6),
-    g: [
-      { e: 'ENSMUSG00000089699', m: 'Gm1992', v: id },
-      { e: 'ENSMUSG00000102343', m: 'Gm37381', v: 4 },
-      { e: 'ENSMUSG00000025900', m: 'Rp1', v: 1 }
-    ]
-  }
-})
-
-const getEncodings = id => {
-  console.log('loading encodings:', id)
-  return Promise.resolve({ _id: id, pids: testPointIds, ns: testNames, xs: testCoords, ys: testCoords, zs: testCoords })
+    .always(hideLoader)
 }
-const getCell = id => {
-  console.log('loading cell:', id)
-  return Promise.resolve(testCells.find(cell => cell._id === id))
-}
+
+const getEncodings = id => $.get(`api/encoding/${id}`)
+const getCell = id => $.get(`api/cell/${id}`)
+
+const showLoader = () => $('#loader').removeClass('invisible')
+const hideLoader = () => $('#loader').addClass('invisible')

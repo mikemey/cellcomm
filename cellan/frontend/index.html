@@ -23,12 +23,16 @@
       <div class="container-fluid">
         <div class="row">
           <div class="form-group col-3 my-1 px-0">
-            <select id="iteration" class="form-control form-control-sm">
-              <option>loading...</option>
-            </select>
+            <label for="iterations" class="small m-0">Iteration:</label>
+            <select id="iterations" class="form-control form-control-sm"></select>
           </div>
-          <div class="form-group col-2 my-1">
-            <button id="iterations-btn" type="submit" class="btn btn-sm btn-success">Go...</button>
+          <div class="form-group col-3 my-1">
+            <label for="iterations-btn" class="small m-0">&nbsp;</label>
+            <button id="iterations-btn" type="submit" class="btn btn-sm btn-success" disabled="disabled">Go...</button>
+          </div>
+          <div class="form-group col-6 my-1">
+            <label for="loader" class="small m-0">&nbsp;</label>
+            <div id="loader"></div>
           </div>
         </div>
       </div>
