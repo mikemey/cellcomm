@@ -1,6 +1,6 @@
 /* global $ Plotly location */
 
-const iterations = Array.from({ length: 450 }, (_, ix) => 5009 + ix * 100)
+const iterationOptions = Array.from({ length: 450 }, (_, ix) => 5009 + ix * 100)
 
 const layout = {
   showlegend: false,
@@ -13,7 +13,13 @@ const display = {
   displaylogo: false
 }
 
+const page = {
+  threshold: 0,
+  cell: null
+}
+
 $(() => {
+  addThresholdListeners()
   const encodingId = loadIterationsSelect()
   return getEncodings(encodingId)
     .then(encodings => {
@@ -26,10 +32,20 @@ $(() => {
     })
 })
 
+const addThresholdListeners = () => {
+  $('#threshold').change(() => {
+    updatePageThreshold()
+    updateCellGenes()
+  })
+  updatePageThreshold()
+}
+
+const updatePageThreshold = () => { page.threshold = parseInt($('#threshold').val()) }
+
 const loadIterationsSelect = () => {
   const iterationSelect = $('#iterations')
   iterationSelect.empty()
-  iterations.forEach(it => iterationSelect.append(`<option>${it}</option>`))
+  iterationOptions.forEach(it => iterationSelect.append(`<option>${it}</option>`))
 
   const encodingId = $(location).attr('href').split('/').slice(-1).pop()
   iterationSelect.val(encodingId)
@@ -69,19 +85,28 @@ const showCellDetails = point => {
   const cellId = point.data.ids[point.pointIndex]
   return getCell(cellId)
     .then(cell => {
+      page.cell = cell
       $('#cell-id').text(`${cell.n} (${cellId})`)
-      const genesTable = $('#cell-genes')
-      const template = $('.gene').first()
-      genesTable.empty()
-      cell.g.forEach(gene => {
+      updateCellGenes()
+    })
+    .always(hideLoader)
+}
+
+const updateCellGenes = () => {
+  if (page.cell && Number.isInteger(page.threshold)) {
+    const genesTable = $('#cell-genes')
+    const template = $('.gene').first()
+    genesTable.empty()
+    page.cell.g
+      .filter(gene => gene.v > page.threshold)
+      .forEach(gene => {
         const geneRow = template.clone()
         geneRow.find('.ensemble').text(gene.e)
         geneRow.find('.mgi').text(gene.m)
         geneRow.find('.pval').text(gene.v)
         genesTable.append(geneRow)
       })
-    })
-    .always(hideLoader)
+  }
 }
 
 const getEncodings = id => $.get(`api/encoding/${id}`)

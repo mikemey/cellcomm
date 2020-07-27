@@ -22,16 +22,24 @@
     <div class="col-3">
       <div class="container-fluid">
         <div class="row">
-          <div class="form-group col-3 my-1 px-0">
-            <label for="iterations" class="small m-0">Iteration:</label>
+          <div class="form-group col-6 my-0 px-0">
+            <label class="small m-0">Iteration:</label>
+          </div>
+          <div class="form-group col-6 my-0 px-0">
+            <label class="small m-0">Value threshold:</label>
+          </div>
+        </div>
+        <div id="control" class="row">
+          <div class="form-group col-3 p-0">
             <select id="iterations" class="form-control form-control-sm"></select>
           </div>
-          <div class="form-group col-3 my-1">
-            <label for="iterations-btn" class="small m-0">&nbsp;</label>
+          <div class="form-group col-3 px-1">
             <button id="iterations-btn" type="submit" class="btn btn-sm btn-success" disabled="disabled">Go...</button>
           </div>
-          <div class="form-group col-6 my-1">
-            <label for="loader" class="small m-0">&nbsp;</label>
+          <div class="form-group col-4 p-0">
+            <input id="threshold" type="number" pattern="[0-9]*" class="form-control form-control-sm text-center" value="20"/>
+          </div>
+          <div class="form-group col-1 p-0">
             <div id="loader"></div>
           </div>
         </div>
