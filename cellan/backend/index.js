@@ -1,5 +1,6 @@
 const path = require('path')
 const express = require('express')
+const morgan = require('morgan')
 const { MongoClient } = require('mongodb')
 
 const defaultConfig = {
@@ -39,6 +40,12 @@ const createStaticRouter = () => {
   const router = express.Router()
   router.get('/index.:ext', (req, res) => sendFrontendFile(res, `index.${req.params.ext}`))
   return router
+}
+
+const createRequestLogger = () => {
+  morgan.token('clientIP', req => req.headers['x-forwarded-for'] || req.connection.remoteAddress)
+  const format = ':date[iso] [:clientIP] :res[content-length]B [:status] :method :url - :response-time[0]ms :user-agent'
+  return morgan(format)
 }
 
 const createApiRouter = (encodingsColl, cellsColl) => {
@@ -85,8 +92,10 @@ class CellanServer {
       .then(([encodingsColl, cellsColl]) => {
         const app = express()
 
+        app.use(createRequestLogger())
         app.use(`${this.cfg.serverPath}/api`, createApiRouter(encodingsColl, cellsColl))
         app.use(`${this.cfg.serverPath}`, createStaticRouter())
+        app.use(`${this.cfg.serverPath}`, createMainPageRouter(encodingsColl, this.cfg))
         app.use(`${this.cfg.serverPath}`, createMainPageRouter(encodingsColl, this.cfg))
 
         this.server = app.listen(this.cfg.port, this.cfg.interface)
