@@ -1,4 +1,4 @@
-/* global $ Plotly location */
+/* global $ Plotly location history */
 
 const iterationOptions = Array.from({ length: 450 }, (_, ix) => 5009 + ix * 100)
 
@@ -14,22 +14,16 @@ const display = {
 }
 
 const page = {
-  threshold: 0,
-  cell: null
+  encodingId: 0,
+  cell: null,
+  threshold: 0
 }
 
 $(() => {
   addThresholdListeners()
-  const encodingId = loadIterationsSelect()
-  return getEncodings(encodingId)
-    .then(encodings => {
-      const graphDiv = $('#cell-graph').get(0)
-      const markers = createMarkers(encodings)
-
-      Plotly.newPlot(graphDiv, markers, layout, display)
-      graphDiv.on('plotly_click', ev => showCellDetails(ev.points[0]))
-      graphDiv.on('plotly_afterplot', hideLoader)
-    })
+  loadIterationsSelect()
+  loadEncodingFromUrl()
+  $(window).on('popstate', loadEncodingFromUrl)
 })
 
 const addThresholdListeners = () => {
@@ -46,21 +40,31 @@ const loadIterationsSelect = () => {
   const iterationSelect = $('#iterations')
   iterationSelect.empty()
   iterationOptions.forEach(it => iterationSelect.append(`<option>${it}</option>`))
-
-  const encodingId = $(location).attr('href').split('/').slice(-1).pop()
-  iterationSelect.val(encodingId)
-
-  const goButton = $('#iterations-btn')
-  iterationSelect.change(() => {
-    goButton.removeAttr('disabled')
-  })
-  goButton.attr('disabled', '')
-  goButton.click(() => {
-    const encodingId = iterationSelect.find(':selected').text()
-    location.href = `${encodingId}`
-  })
-  return encodingId
+  iterationSelect.change(updateEncoding)
 }
+
+const loadEncodingFromUrl = () => {
+  page.encodingId = $(location).attr('href').split('/').slice(-1).pop()
+  $('#iterations').val(page.encodingId)
+  updatePlot()
+}
+
+const updateEncoding = () => {
+  page.encodingId = $('#iterations').find(':selected').text()
+  const newLocation = $(location).attr('href').replace(/([0-9]*)$/, page.encodingId)
+  history.pushState(null, '', newLocation)
+  updatePlot()
+}
+
+const updatePlot = () => getEncodings(page.encodingId)
+  .then(encodings => {
+    const graphDiv = $('#cell-graph').get(0)
+    const markers = createMarkers(encodings)
+
+    Plotly.newPlot(graphDiv, markers, layout, display)
+    graphDiv.on('plotly_click', ev => showCellDetails(ev.points[0]))
+    graphDiv.on('plotly_afterplot', hideLoader)
+  })
 
 const createMarkers = encodings => {
   const text = encodings.ns.map((name, ix) => `${encodings.pids[ix]}<br>${name}`)
@@ -95,7 +99,7 @@ const showCellDetails = point => {
 const updateCellGenes = () => {
   if (page.cell && Number.isInteger(page.threshold)) {
     const genesTable = $('#cell-genes')
-    const template = $('.gene').first()
+    const template = $('.gene-template').first()
     genesTable.empty()
     page.cell.g
       .filter(gene => gene.v > page.threshold)
