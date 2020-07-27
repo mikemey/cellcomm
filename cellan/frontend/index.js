@@ -56,15 +56,18 @@ const updateEncoding = () => {
   updatePlot()
 }
 
-const updatePlot = () => getEncodings(page.encodingId)
-  .then(encodings => {
-    const graphDiv = $('#cell-graph').get(0)
-    const markers = createMarkers(encodings)
+const updatePlot = () => {
+  showLoader()
+  return getEncodings(page.encodingId)
+    .then(encodings => {
+      const graphDiv = $('#cell-graph').get(0)
+      const markers = createMarkers(encodings)
 
-    Plotly.newPlot(graphDiv, markers, layout, display)
-    graphDiv.on('plotly_click', ev => showCellDetails(ev.points[0]))
-    graphDiv.on('plotly_afterplot', hideLoader)
-  })
+      Plotly.newPlot(graphDiv, markers, layout, display)
+      graphDiv.on('plotly_click', ev => showCellDetails(ev.points[0]))
+      graphDiv.on('plotly_afterplot', hideLoader)
+    })
+}
 
 const createMarkers = encodings => {
   const text = encodings.ns.map((name, ix) => `${encodings.pids[ix]}<br>${name}`)
