@@ -11,7 +11,8 @@ const testConfig = {
     url: 'mongodb://127.0.0.1:27017',
     dbName: 'cellcomm-test',
     cellsColl: 'cells',
-    encodingsColl: 'encs'
+    encodingsColl: 'encs',
+    iterationsColl: 'encits'
   }
 }
 
@@ -36,6 +37,10 @@ class TestServer extends CellanServer {
 
   insertEncodings (data) {
     return this.testDb.collection(testConfig.mongodb.encodingsColl).insertMany(data)
+  }
+
+  insertIterations (data) {
+    return this.testDb.collection(testConfig.mongodb.iterationsColl).insertMany(data)
   }
 
   insertCells (data) {

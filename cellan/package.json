@@ -9,7 +9,7 @@
     "prestart": "npm install",
     "start": "node index.js",
     "lint": "standard",
-    "specs": "mocha 'test/**/**.spec.js' -r chai/register-should",
+    "specs": "NODE_ENV=TEST mocha 'test/**/**.spec.js' -r chai/register-should",
     "~specs": "nodemon -x 'npm run specs -s'",
     "test": "npm run lint -s && npm run specs -s"
   },

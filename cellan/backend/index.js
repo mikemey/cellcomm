@@ -3,6 +3,8 @@ const express = require('express')
 const morgan = require('morgan')
 const { MongoClient } = require('mongodb')
 
+const createApiRouter = require('./apiRouter')
+
 const defaultConfig = {
   port: 13013,
   interface: '0.0.0.0',
@@ -12,7 +14,8 @@ const defaultConfig = {
     url: 'mongodb://127.0.0.1:27017',
     dbName: 'cellcomm',
     cellsColl: 'cells',
-    encodingsColl: 'encs'
+    encodingsColl: 'encs',
+    iterationsColl: 'encits'
   }
 }
 
@@ -48,29 +51,6 @@ const createRequestLogger = () => {
   return morgan(format)
 }
 
-const createApiRouter = (encodingsColl, cellsColl) => {
-  const router = express.Router()
-
-  router.get('/cell/:id', (req, res) => {
-    const cellId = req.params.id
-    return cellsColl.findOne({ _id: cellId })
-      .then(cellData => cellData
-        ? res.status(200).send(cellData)
-        : res.status(404).end()
-      )
-  })
-
-  router.get('/encoding/:id', (req, res) => {
-    const encodingId = req.params.id
-    return encodingsColl.findOne({ _id: encodingId })
-      .then(encData => encData
-        ? res.status(200).send(encData)
-        : res.status(404).end()
-      )
-  })
-  return router
-}
-
 class CellanServer {
   constructor (config = defaultConfig) {
     this.cfg = config
@@ -87,13 +67,16 @@ class CellanServer {
       })
       .then(db => Promise.all([
         db.collection(this.cfg.mongodb.encodingsColl),
+        db.collection(this.cfg.mongodb.iterationsColl),
         db.collection(this.cfg.mongodb.cellsColl)
       ]))
-      .then(([encodingsColl, cellsColl]) => {
+      .then(([encodingsColl, iterationsColl, cellsColl]) => {
         const app = express()
 
-        app.use(createRequestLogger())
-        app.use(`${this.cfg.serverPath}/api`, createApiRouter(encodingsColl, cellsColl))
+        if (process.env.NODE_ENV.toUpperCase() !== 'TEST') {
+          app.use(createRequestLogger())
+        }
+        app.use(`${this.cfg.serverPath}/api`, createApiRouter(encodingsColl, iterationsColl, cellsColl))
         app.use(`${this.cfg.serverPath}`, createStaticRouter())
         app.use(`${this.cfg.serverPath}`, createMainPageRouter(encodingsColl, this.cfg))
         app.use(`${this.cfg.serverPath}`, createMainPageRouter(encodingsColl, this.cfg))
