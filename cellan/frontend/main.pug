@@ -10,7 +10,6 @@ html(lang='en')
         .alert.alert-secondary(role="alert")= `Invalid run "${params.eid}"`
       if params.error === 'it'
         .alert.alert-secondary(role="alert")= `Invalid iteration #${params.it} for "${params.eid}"`
-      .w-100= `${locals.settings}`
       h4.my-4.text-center= 'Select encoding run'
       table.table
         thead

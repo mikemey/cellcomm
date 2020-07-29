@@ -1,0 +1,43 @@
+doctype html
+html(lang='en')
+  head
+    meta(charset='utf-8')
+    title='Celltype analysis'
+    script(src="https://cdn.plot.ly/plotly-latest.min.js")
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js")
+    script(src=`${basepath}/static/encits.js`)
+    link(rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css")
+    link(rel="stylesheet" href=`${basepath}/static/encits.css`)
+  body
+    .container-fluid
+      .row
+        #cell-graph.col-9.vh-100
+        .col-3
+          .container-fluid
+            .row
+              .form-group.offset-1.col-5.my-0.px-0
+                label.small.m-0= 'Iteration:'
+              .form-group.col-6.my-0.px-0
+                label.small.m-0= 'Value threshold:'
+            #control.row
+              .form-group.offset-1.col-3.p-0
+                select#iterations.form-control.form-control-sm
+              .form-group.offset-2.col-3.p-0
+                input#threshold.form-control.form-control-sm.text-center(type="number" pattern="[0-9]*" value="20")
+              .form-group.offset-2.col-1.p-0
+                #loader
+          table.table.table-sm
+            thead
+              tr
+                td.ensemble.w-50(scope="row")= 'Ensembl'
+                td.mgi= 'MGI'
+                td.gval.text-right= 'value'
+              tr
+                th#cell-id.text-center(scope="col" colspan="3")= 'click point in plot'
+            tbody#cell-genes
+          .invisible
+            table
+              tr.gene-template
+                td.ensemble.w-50(scope="row")
+                td.mgi
+                td.gval.text-right

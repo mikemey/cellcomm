@@ -10,7 +10,6 @@ const defaultConfig = {
   port: 13013,
   interface: '0.0.0.0',
   serverPath: '/cellan',
-  //  defaultEncoding: 12209,
   mongodb: {
     url: 'mongodb://127.0.0.1:27017',
     dbName: 'cellcomm',
@@ -30,6 +29,11 @@ const createRequestLogger = () => {
   morgan.token('clientIP', req => req.headers['x-forwarded-for'] || req.connection.remoteAddress)
   const format = ':date[iso] [:clientIP] :res[content-length]B [:status] :method :url - :response-time[0]ms :user-agent'
   return morgan(format)
+}
+
+const createStaticRouter = () => {
+  const options = { maxAge: 86400000 }
+  return express.static(path.join(__dirname, '..', 'frontend-static'), options)
 }
 
 class CellanServer {
@@ -56,14 +60,15 @@ class CellanServer {
         const app = express()
         app.set('views', path.join(__dirname, '..', '/frontend'))
         app.set('view engine', 'pug')
+        app.locals.basepath = this.cfg.serverPath
 
         const env = process.env.NODE_ENV
         if (env && env.toUpperCase() !== 'TEST') {
           app.use(createRequestLogger())
         }
         app.use(`${this.cfg.serverPath}/api`, createApiRouter(encodingsColl, iterationsColl, cellsColl))
-        app.use(`${this.cfg.serverPath}/static`, express.static(path.join(__dirname, '..', 'frontend-static')))
-        app.use(`${this.cfg.serverPath}`, createHtmlRouter(encodingsColl, this.cfg))
+        app.use(`${this.cfg.serverPath}/static`, createStaticRouter())
+        app.use(`${this.cfg.serverPath}`, createHtmlRouter(encodingsColl, iterationsColl, this.cfg))
 
         this.server = app.listen(this.cfg.port, this.cfg.interface)
         return app
