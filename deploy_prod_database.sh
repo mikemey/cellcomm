@@ -15,5 +15,5 @@ DB_COLLS=(
 )
 
 for coll in ${DB_COLLS[@]}; do
-  mongodump --db "${DB_NAME}" --collection "${coll}" --archive | mongorestore --port=${SSH_PORT} --archive
+  mongodump --db "${DB_NAME}" --collection "${coll}" --archive | mongorestore --drop --port=${SSH_PORT} --archive
 done
