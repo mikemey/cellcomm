@@ -16,7 +16,7 @@ const createApiRouter = (encodingsColl, iterationsColl, cellsColl) => {
 
   router.get('/encit/:encId/:it', (req, res) => {
     const eid = req.params.encId
-    const it = req.params.it
+    const it = parseInt(req.params.it)
     return iterationsColl.findOne({ eid, it }, withoutIdField)
       .then(cellData => cellData
         ? res.status(200).send(cellData)
@@ -26,7 +26,7 @@ const createApiRouter = (encodingsColl, iterationsColl, cellsColl) => {
 
   router.get('/cell/:sid/:cid', (req, res) => {
     const sid = req.params.sid
-    const cid = req.params.cid
+    const cid = parseInt(req.params.cid)
     return cellsColl.findOne({ sid, cid }, withoutIdField)
       .then(cellData => cellData
         ? res.status(200).send(cellData)

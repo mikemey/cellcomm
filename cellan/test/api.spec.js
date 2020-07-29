@@ -17,15 +17,15 @@ describe('Cellan API', () => {
   ]
 
   const testIterations = [
-    { eid: 'VLR5000', it: '5009', cids: [1, 2, 3] },
-    { eid: 'VLR5000', it: '5019', cids: [1, 2, 3] },
-    { eid: 'VLR5000', it: '5029', cids: [1, 2, 3] }
+    { eid: 'VLR5000', it: 5009, cids: [1, 2, 3] },
+    { eid: 'VLR5000', it: 5019, cids: [1, 2, 3] },
+    { eid: 'VLR5000', it: 5029, cids: [1, 2, 3] }
   ]
 
   const testCells = [
-    { sid: 'GSE122930_Sham_1_week', cid: '1', n: 'AAACGGGTCTGATTCT-1', g: [1] },
-    { sid: 'GSE122930_Sham_1_week', cid: '2', n: 'AAACGGGTCTGATTCT-2', g: [2] },
-    { sid: 'GSE122930_Sham_1_week', cid: '3', n: 'AAACGGGTCTGATTCT-3', g: [3] }
+    { sid: 'GSE122930_Sham_1_week', cid: 1, n: 'AAACGGGTCTGATTCT-1', g: [1] },
+    { sid: 'GSE122930_Sham_1_week', cid: 2, n: 'AAACGGGTCTGATTCT-2', g: [2] },
+    { sid: 'GSE122930_Sham_1_week', cid: 3, n: 'AAACGGGTCTGATTCT-3', g: [3] }
   ]
 
   const clearDatabaseIdsFromTestData = () => {
