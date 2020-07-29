@@ -21,6 +21,6 @@ html(lang='en')
           each enc in encodings
             tr
               td(scope="row")
-                a(href=`./${enc._id}/${enc.defit}`)= enc._id
+                a(href=`${basepath}/${enc._id}/${enc.defit}`)= enc._id
               td= moment.utc(enc.date).format('YYYY-MM-DD HH:mm')
               td= enc.src

@@ -25,7 +25,7 @@ describe('Main page + static resources', () => {
       const pageText = data.text
       testEncodings.forEach(expected => {
         pageText.should.include(`${expected._id}</a>`)
-        pageText.should.include(`href="./${expected._id}/${expected.defit}"`)
+        pageText.should.include(`href="${testPath}/${expected._id}/${expected.defit}"`)
         pageText.should.include(`${expected.src}</td>`)
         pageText.should.include('2020-07-29 11:19</td>')
       })
