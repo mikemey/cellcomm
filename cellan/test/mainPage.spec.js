@@ -32,6 +32,16 @@ describe('Main page + static resources', () => {
     })
   )
 
+  it('shows encoding error message', () => requestPage('?error=enc&eid=abcde')
+    .expect(200)
+    .then(resp => resp.text.should.include('Invalid run &quot;abcde&quot;'))
+  )
+
+  it('shows iteration error message', () => requestPage('?error=it&eid=abcde&it=323')
+    .expect(200)
+    .then(resp => resp.text.should.include('Invalid iteration #323 for &quot;abcde&quot;'))
+  )
+
   it('serve js-file', () => requestPage('/static/encits.js')
     .expect(200)
     .then(resp => resp.text.should.include('global $ Plotly'))
