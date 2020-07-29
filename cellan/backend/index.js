@@ -36,11 +36,14 @@ const createStaticRouter = () => {
   return express.static(path.join(__dirname, '..', 'frontend-static'), options)
 }
 
+const maintenanceRouter = (_, res) => res.render('maintenance')
+
 class CellanServer {
   constructor (config = defaultConfig) {
     this.cfg = config
     this.client = null
     this.server = null
+    this.logger = new Logger()
   }
 
   start () {
@@ -62,13 +65,22 @@ class CellanServer {
         app.set('view engine', 'pug')
         app.locals.basepath = this.cfg.serverPath
 
-        const env = process.env.NODE_ENV
-        if (env && env.toUpperCase() !== 'TEST') {
+        const env = (process.env.NODE_ENV && process.env.NODE_ENV.toLowerCase()) || 'prod'
+        if (env === 'test') {
+          this.logger.verbose = false
+        } else {
           app.use(createRequestLogger())
         }
-        app.use(`${this.cfg.serverPath}/api`, createApiRouter(encodingsColl, iterationsColl, cellsColl))
-        app.use(`${this.cfg.serverPath}/static`, createStaticRouter())
-        app.use(`${this.cfg.serverPath}`, createHtmlRouter(encodingsColl, iterationsColl, this.cfg))
+
+        if (env === 'maintain') {
+          this.logger.log('maintenance mode')
+          app.use(`${this.cfg.serverPath}*`, maintenanceRouter)
+        } else {
+          this.logger.log('default server mode')
+          app.use(`${this.cfg.serverPath}/api`, createApiRouter(encodingsColl, iterationsColl, cellsColl))
+          app.use(`${this.cfg.serverPath}/static`, createStaticRouter())
+          app.use(`${this.cfg.serverPath}`, createHtmlRouter(encodingsColl, iterationsColl, this.cfg))
+        }
 
         this.server = app.listen(this.cfg.port, this.cfg.interface)
         return app
@@ -80,6 +92,18 @@ class CellanServer {
       this.client.close(),
       this.server.close()
     ])
+  }
+}
+
+class Logger {
+  constructor () {
+    this.verbose = true
+  }
+
+  log (...msg) {
+    if (this.verbose) {
+      console.log(...msg)
+    }
   }
 }
 
