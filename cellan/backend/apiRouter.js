@@ -1,11 +1,13 @@
 const express = require('express')
 
+const withoutIdField = { projection: { _id: 0 } }
+
 const createApiRouter = (encodingsColl, iterationsColl, cellsColl) => {
   const router = express.Router()
 
   router.get('/encoding/:encId', (req, res) => {
     const encodingId = req.params.encId
-    return encodingsColl.findOne({ _id: encodingId })
+    return encodingsColl.findOne({ _id: encodingId }, withoutIdField)
       .then(encData => encData
         ? res.status(200).send(encData)
         : res.status(404).end()
@@ -15,7 +17,7 @@ const createApiRouter = (encodingsColl, iterationsColl, cellsColl) => {
   router.get('/encit/:encId/:it', (req, res) => {
     const eid = req.params.encId
     const it = req.params.it
-    return iterationsColl.findOne({ _id: { eid, it } })
+    return iterationsColl.findOne({ eid, it }, withoutIdField)
       .then(cellData => cellData
         ? res.status(200).send(cellData)
         : res.status(404).end()
@@ -25,7 +27,7 @@ const createApiRouter = (encodingsColl, iterationsColl, cellsColl) => {
   router.get('/cell/:sid/:cid', (req, res) => {
     const sid = req.params.sid
     const cid = req.params.cid
-    return cellsColl.findOne({ _id: { sid, cid } })
+    return cellsColl.findOne({ sid, cid }, withoutIdField)
       .then(cellData => cellData
         ? res.status(200).send(cellData)
         : res.status(404).end()

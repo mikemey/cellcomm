@@ -1,7 +1,7 @@
 /* global describe it before after */
 const TestServer = require('./testServer')
 
-describe.only('cellan server', () => {
+describe('Cellan API', () => {
   const server = new TestServer()
 
   const path = server.cfg.serverPath
@@ -17,21 +17,27 @@ describe.only('cellan server', () => {
   ]
 
   const testIterations = [
-    { _id: { eid: 'VLR5000', it: '5009' }, cids: [1, 2, 3] },
-    { _id: { eid: 'VLR5000', it: '5019' }, cids: [1, 2, 3] },
-    { _id: { eid: 'VLR5000', it: '5029' }, cids: [1, 2, 3] }
+    { eid: 'VLR5000', it: '5009', cids: [1, 2, 3] },
+    { eid: 'VLR5000', it: '5019', cids: [1, 2, 3] },
+    { eid: 'VLR5000', it: '5029', cids: [1, 2, 3] }
   ]
 
   const testCells = [
-    { _id: { sid: 'GSE122930_Sham_1_week', cid: '1' }, n: 'AAACGGGTCTGATTCT-1', g: [1] },
-    { _id: { sid: 'GSE122930_Sham_1_week', cid: '2' }, n: 'AAACGGGTCTGATTCT-2', g: [2] },
-    { _id: { sid: 'GSE122930_Sham_1_week', cid: '3' }, n: 'AAACGGGTCTGATTCT-3', g: [3] }
+    { sid: 'GSE122930_Sham_1_week', cid: '1', n: 'AAACGGGTCTGATTCT-1', g: [1] },
+    { sid: 'GSE122930_Sham_1_week', cid: '2', n: 'AAACGGGTCTGATTCT-2', g: [2] },
+    { sid: 'GSE122930_Sham_1_week', cid: '3', n: 'AAACGGGTCTGATTCT-3', g: [3] }
   ]
+
+  const clearDatabaseIdsFromTestData = () => {
+    const removeIdField = arr => arr.forEach(el => delete el._id)
+    return [testEncodings, testIterations, testCells].forEach(removeIdField)
+  }
 
   before(() => server.start()
     .then(() => server.insertEncodings(testEncodings))
     .then(() => server.insertIterations(testIterations))
     .then(() => server.insertCells(testCells))
+    .then(clearDatabaseIdsFromTestData)
   )
 
   after(() => server.stop())
@@ -45,8 +51,8 @@ describe.only('cellan server', () => {
   })
 
   describe('iterations', () => {
-    it('invalid iteration -> 404', () => requestIteration('VLR5000', '5').expect(404))
     it('invalid encoding-id -> 404', () => requestIteration('4', 5009).expect(404))
+    it('invalid iteration -> 404', () => requestIteration('VLR5000', '5').expect(404))
 
     it('valid iteration -> returns iterations', () => requestIteration('VLR5000', 5009)
       .expect(200, testIterations[0])
