@@ -47,6 +47,10 @@ class TestServer extends CellanServer {
     return this.testDb.collection(testConfig.mongodb.cellsColl).insertMany(data)
   }
 
+  getCollectionIndices (name) {
+    return this.testDb.collection(name).indexes()
+  }
+
   request () { return supertest(this.app) }
 }
 

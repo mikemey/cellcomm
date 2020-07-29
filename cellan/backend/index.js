@@ -19,6 +19,12 @@ const defaultConfig = {
   }
 }
 
+const ensureIndices = ([encodingsColl, iterationsColl, cellsColl]) => Promise.all([
+  iterationsColl.createIndex({ eid: 1, it: 1 }),
+  cellsColl.createIndex({ sid: 1, cid: 1 })
+]).then(() => iterationsColl.indexes())
+  .then(() => [encodingsColl, iterationsColl, cellsColl])
+
 const sendFrontendFile = (res, fileName) => res.sendFile(path.join(__dirname, '..', 'frontend', fileName))
 
 const createMainPageRouter = (encodingsColl, config) => {
@@ -70,6 +76,7 @@ class CellanServer {
         db.collection(this.cfg.mongodb.iterationsColl),
         db.collection(this.cfg.mongodb.cellsColl)
       ]))
+      .then(ensureIndices)
       .then(([encodingsColl, iterationsColl, cellsColl]) => {
         const app = express()
 
