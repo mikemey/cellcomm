@@ -14,7 +14,10 @@ const display = {
 }
 
 const page = {
+  basePath: null,
   encodingId: 0,
+  encoding: null,
+  iteration: 0,
   cell: null,
   threshold: 0
 }
@@ -22,8 +25,8 @@ const page = {
 $(() => {
   addThresholdListeners()
   loadIterationsSelect()
-  loadEncodingFromUrl()
-  $(window).on('popstate', loadEncodingFromUrl)
+  loadDataFromUrl()
+  $(window).on('popstate', loadDataFromUrl)
 })
 
 const addThresholdListeners = () => {
@@ -36,32 +39,35 @@ const addThresholdListeners = () => {
 
 const updatePageThreshold = () => { page.threshold = parseInt($('#threshold').val()) }
 
+const loadDataFromUrl = () => {
+  const segments = $(location).attr('href').split('/')
+  page.iteration = segments.pop()
+  page.encodingId = segments.pop()
+  page.basePath = segments.join('/')
+  $('#iterations').val(page.iteration)
+  updatePlot()
+}
+
 const loadIterationsSelect = () => {
   const iterationSelect = $('#iterations')
   iterationSelect.empty()
   iterationOptions.forEach(it => iterationSelect.append(`<option>${it}</option>`))
-  iterationSelect.change(updateEncoding)
+  iterationSelect.change(updateIteration)
 }
 
-const loadEncodingFromUrl = () => {
-  page.encodingId = $(location).attr('href').split('/').slice(-1).pop()
-  $('#iterations').val(page.encodingId)
-  updatePlot()
-}
-
-const updateEncoding = () => {
-  page.encodingId = $('#iterations').find(':selected').text()
-  const newLocation = $(location).attr('href').replace(/([0-9]*)$/, page.encodingId)
+const updateIteration = () => {
+  page.iteration = $('#iterations').find(':selected').text()
+  const newLocation = $(location).attr('href').replace(/([0-9]*)$/, page.iteration)
   history.pushState(null, '', newLocation)
   updatePlot()
 }
 
 const updatePlot = () => {
   showLoader()
-  return getEncodings(page.encodingId)
-    .then(encodings => {
+  return getEncodingIteration(page.encodingId, page.iteration)
+    .then(cellPoints => {
       const graphDiv = $('#cell-graph').get(0)
-      const markers = createMarkers(encodings)
+      const markers = createMarkers(cellPoints)
 
       Plotly.newPlot(graphDiv, markers, layout, display)
       graphDiv.on('plotly_click', ev => showCellDetails(ev.points[0]))
@@ -69,19 +75,19 @@ const updatePlot = () => {
     })
 }
 
-const createMarkers = encodings => {
-  const text = encodings.ns.map((name, ix) => `${encodings.pids[ix]}<br>${name}`)
+const createMarkers = cellPoints => {
+  const text = cellPoints.ns.map((name, ix) => `${cellPoints.cids[ix]}<br>${name}`)
   return [{
-    ids: encodings.pids,
+    ids: cellPoints.cids,
     text,
-    x: encodings.xs,
-    y: encodings.ys,
+    x: cellPoints.xs,
+    y: cellPoints.ys,
     mode: 'markers',
     type: 'scattergl',
     hoverinfo: 'text',
     marker: {
       size: 4,
-      color: encodings.zs,
+      color: cellPoints.zs,
       colorscale: 'Jet'
     }
   }]
@@ -110,14 +116,22 @@ const updateCellGenes = () => {
         const geneRow = template.clone()
         geneRow.find('.ensemble').text(gene.e)
         geneRow.find('.mgi').text(gene.m)
-        geneRow.find('.pval').text(gene.v)
+        geneRow.find('.gval').text(gene.v)
         genesTable.append(geneRow)
       })
   }
 }
 
-const getEncodings = id => $.get(`api/encoding/${id}`)
-const getCell = id => $.get(`api/cell/${id}`)
+const apiGet = sub => $.get(`${page.basePath}/api/${sub}`)
+
+const ensureEncoding = () => page.encoding
+  ? $.Deferred().resolve()
+  : apiGet(`encoding/${page.encodingId}`)
+    .then(encoding => { page.encoding = encoding })
+
+const getEncodingIteration = (encId, it) => apiGet(`encit/${encId}/${it}`)
+const getCell = cid => ensureEncoding()
+  .then(() => apiGet(`cell/${page.encoding.src}/${cid}`))
 
 const showLoader = () => $('#loader').removeClass('invisible')
 const hideLoader = () => $('#loader').addClass('invisible')
