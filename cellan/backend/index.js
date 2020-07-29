@@ -4,12 +4,13 @@ const morgan = require('morgan')
 const { MongoClient } = require('mongodb')
 
 const createApiRouter = require('./apiRouter')
+const createHtmlRouter = require('./htmlRouter')
 
 const defaultConfig = {
   port: 13013,
   interface: '0.0.0.0',
   serverPath: '/cellan',
-  defaultEncoding: 12209,
+  //  defaultEncoding: 12209,
   mongodb: {
     url: 'mongodb://127.0.0.1:27017',
     dbName: 'cellcomm',
@@ -24,32 +25,6 @@ const ensureIndices = ([encodingsColl, iterationsColl, cellsColl]) => Promise.al
   cellsColl.createIndex({ sid: 1, cid: 1 })
 ]).then(() => iterationsColl.indexes())
   .then(() => [encodingsColl, iterationsColl, cellsColl])
-
-const sendFrontendFile = (res, fileName) => res.sendFile(path.join(__dirname, '..', 'frontend', fileName))
-
-const createMainPageRouter = (encodingsColl, config) => {
-  const router = express.Router()
-  const defaultPath = `${config.serverPath}/${config.defaultEncoding}`
-
-  router.get('/:enc?', (req, res) => {
-    const redirectToDefault = () => res.redirect(303, defaultPath)
-    return req.params.enc
-      ? encodingsColl.findOne({ _id: req.params.enc })
-        .then(ret => ret
-          ? sendFrontendFile(res, 'index.html')
-          : sendFrontendFile(res, 'error.html')
-        )
-      : redirectToDefault()
-  })
-
-  return router
-}
-
-const createStaticRouter = () => {
-  const router = express.Router()
-  router.get('/index.:ext', (req, res) => sendFrontendFile(res, `index.${req.params.ext}`))
-  return router
-}
 
 const createRequestLogger = () => {
   morgan.token('clientIP', req => req.headers['x-forwarded-for'] || req.connection.remoteAddress)
@@ -79,14 +54,16 @@ class CellanServer {
       .then(ensureIndices)
       .then(([encodingsColl, iterationsColl, cellsColl]) => {
         const app = express()
+        app.set('views', path.join(__dirname, '..', '/frontend'))
+        app.set('view engine', 'pug')
 
-        if (process.env.NODE_ENV.toUpperCase() !== 'TEST') {
+        const env = process.env.NODE_ENV
+        if (env && env.toUpperCase() !== 'TEST') {
           app.use(createRequestLogger())
         }
         app.use(`${this.cfg.serverPath}/api`, createApiRouter(encodingsColl, iterationsColl, cellsColl))
-        app.use(`${this.cfg.serverPath}`, createStaticRouter())
-        app.use(`${this.cfg.serverPath}`, createMainPageRouter(encodingsColl, this.cfg))
-        app.use(`${this.cfg.serverPath}`, createMainPageRouter(encodingsColl, this.cfg))
+        app.use(`${this.cfg.serverPath}/static`, express.static(path.join(__dirname, '..', 'frontend-static')))
+        app.use(`${this.cfg.serverPath}`, createHtmlRouter(encodingsColl, this.cfg))
 
         this.server = app.listen(this.cfg.port, this.cfg.interface)
         return app
