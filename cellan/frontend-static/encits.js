@@ -2,14 +2,22 @@
 
 const iterationOptions = Array.from({ length: 450 }, (_, ix) => 5009 + ix * 100)
 
+const transparentColor = 'rgba(0,0,0,0)'
 const layout = {
   showlegend: false,
   margin: { t: 0, l: 0, b: 0, r: 0 },
-  hovermode: 'closest'
+  hovermode: 'closest',
+  plot_bgcolor: transparentColor,
+  paper_bgcolor: transparentColor,
+  modebar: {
+    color: 'darkgray',
+    activecolor: 'black',
+    bgcolor: transparentColor
+  }
 }
 const display = {
   displayModeBar: true,
-  modeBarButtonsToRemove: ['select2d', 'lasso2d', 'toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian'],
+  modeBarButtonsToRemove: ['resetScale2d', 'select2d', 'lasso2d', 'toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian'],
   displaylogo: false
 }
 

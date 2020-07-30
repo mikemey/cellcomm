@@ -1,26 +1,21 @@
-doctype html
-html(lang='en')
-  head
-    meta(charset='utf-8')
-    title='Celltype analysis'
-    link(rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css")
-  body
-    .container.w-50
-      if params.error === 'enc'
-        .alert.alert-secondary(role="alert")= `Invalid run "${params.eid}"`
-      if params.error === 'it'
-        .alert.alert-secondary(role="alert")= `Invalid iteration #${params.it} for "${params.eid}"`
-      h4.my-4.text-center= 'Select encoding run'
-      table.table
-        thead
+extends layout.pug
+block content
+  .container.w-50
+    if params.error === 'enc'
+      .alert.alert-secondary(role="alert")= `Invalid run "${params.eid}"`
+    if params.error === 'it'
+      .alert.alert-secondary(role="alert")= `Invalid iteration #${params.it} for "${params.eid}"`
+    h4.my-4.text-center= 'Select encoding run'
+    table.table
+      thead
+        tr
+          th(scope="col")= 'run #'
+          th(scope="col")= 'date'
+          th(scope="col")= 'data source'
+      tbody.small
+        each enc in encodings
           tr
-            th(scope="col")= 'run #'
-            th(scope="col")= 'date'
-            th(scope="col")= 'data source'
-        tbody.small
-          each enc in encodings
-            tr
-              td(scope="row")
-                a(href=`${basepath}/${enc._id}/${enc.defit}`)= enc._id
-              td= moment.utc(enc.date).format('YYYY-MM-DD HH:mm')
-              td= enc.src
+            td(scope="row")
+              a(href=`${basepath}/${enc._id}/${enc.defit}`)= enc._id
+            td= moment.utc(enc.date).format('YYYY-MM-DD HH:mm')
+            td= enc.src
