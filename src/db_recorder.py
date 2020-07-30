@@ -1,5 +1,5 @@
-from datetime import datetime
 import os
+from datetime import datetime
 
 from pymongo import MongoClient
 from pymongo.collection import Collection
@@ -11,10 +11,24 @@ ITERATIONS_COLLECTION = 'encits'
 CELLS_COLLECTION = 'cells'
 
 
+def get_file_name(full_path):
+    return full_path.split('/')[-1]
+
+
+def check_files(sources):
+    for src_type in sources:
+        src_file = sources[src_type]
+        if not os.path.exists(src_file):
+            raise ValueError(f'File for "{src_type}" not found: {src_file}')
+
+
 class DbRecorder:
-    def __init__(self, enc_run_id, barcode_file_path, m_db=MONGO_DB):
+    def __init__(self, enc_run_id, sources, m_db=MONGO_DB):
+        check_files(sources)
         self.enc_run_id = enc_run_id
-        self.barcode_file = barcode_file_path
+        self.matrix_file = sources['matrix']
+        self.barcodes_file = sources['barcodes']
+        self.genes_file = sources['genes']
         self.db = MongoClient(MONGO_URL)[m_db]
 
         # data_id, barcode_file = convert_from(matrix_file_path)
@@ -35,12 +49,17 @@ class DbRecorder:
         return list(cells.find(query))
 
     def store_encoding_run(self):
-        src_id = self.barcode_file.split('/')[-1]
+        if self.__coll(ENCODINGS_COLLECTION).find_one({'_id': self.enc_run_id}):
+            raise ValueError(f'Encoding run id already exists: {self.enc_run_id}')
         encoding = {
             '_id': self.enc_run_id,
             'date': datetime.now(),
             'defit': 0,
-            'src': src_id
+            'srcs': {
+                'matrix': get_file_name(self.matrix_file),
+                'barcodes': get_file_name(self.barcodes_file),
+                'genes': get_file_name(self.genes_file)
+            }
         }
         self.__coll(ENCODINGS_COLLECTION).insert_one(encoding)
 
@@ -69,8 +88,3 @@ class DbRecorder:
     #             pickle.dump(encodings, f, protocol=pickle.HIGHEST_PROTOCOL)
     #
     #     return intercept
-
-
-if __name__ == '__main__':
-    m = os.path.join(os.path.dirname(__file__), '..', 'data', 'GSE122930_TAC_4_weeks_small_matrix.mtx')
-    r = DbRecorder('test-run-id', m)
