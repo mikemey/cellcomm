@@ -7,17 +7,16 @@ from tf_testcase import TFTestCase
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '5'
 
 TEST_MATRIX_FILE = os.path.join(os.path.dirname(__file__), 'example_matrix.mtx')
-TEST_CELLS_FILE = os.path.join(os.path.dirname(__file__), 'example_cells.cell')
 TEST_BATCH_SIZE = 3
-TEST_GENE_COUNT = 11
+TEST_GENE_COUNT = 5
 TEST_ENCODING_SIZE = 8
 TEST_MATRIX_CONTENT = [
-    # gene: 32, 34, 39, 40, 60, 63, 23764, 27918, 27919, 27921, 27994
-    [0, 0, 0, 0, 1, 11, 0, 0, 0, 6, 1],
-    [0, 1, 0, 1, 0, 0, 0, 4, 0, 6, 0],
-    [1, 1, 1, 1, 0, 0, 0, 0, 1, 6, 0],
-    [0, 0, 0, 0, 0, 0, 0, 1, 1, 14, 0],
-    [0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0],
+    # gene: 1, 2, 3, 4, 5
+    [0, 1, 6, 1, 11],
+    [4, 1, 0, 1, 6],
+    [1, 1, 1, 1, 6],
+    [1, 0, 14, 0, 1],
+    [0, 0, 0, 2, 0],
 ]
 
 
@@ -29,11 +28,6 @@ class CellTrainingTestCase(TFTestCase):
     def test_load_matrix_and_pivot(self):
         self.assertEqual((5, TEST_GENE_COUNT), self.cell_batch.shape)
         self.assertDeepEqual(TEST_MATRIX_CONTENT, self.cell_batch)
-
-    def test_load_cell_file(self):
-        cell_data = load_cells(TEST_CELLS_FILE)
-        self.assertEqual((5, TEST_GENE_COUNT), cell_data.shape)
-        self.assertDeepEqual(TEST_MATRIX_CONTENT, cell_data)
 
     def test_sample_cell_data(self):
         sampled = self.trainer.sample_cell_data(0)
