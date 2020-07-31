@@ -59,9 +59,7 @@ class ParamInterceptors:
         atexit.register(self.sink.drain_data)
 
         self.plots_dir = f'{self.log_dir}/plots'
-        self.encodings_dir = f'{self.log_dir}/encodings'
-        for d in [self.plots_dir, self.encodings_dir]:
-            pathlib.Path(d).mkdir()
+        pathlib.Path(self.plots_dir).mkdir()
 
     def print_losses(self, it, all_losses):
         g_loss, e_loss, d_loss = all_losses
@@ -87,14 +85,6 @@ class ParamInterceptors:
             batch_size = len(batch)
             tp_acc, tn_acc = trainer.network.evaluate_discriminator_accuracy(batch)
             self.sink.add_data(graph_id, [it, tp_acc / batch_size, tn_acc / batch_size])
-
-        return intercept
-
-    def save_encodings(self, trainer: CellTraining):
-        def intercept(it, _):
-            encodings = trainer.network.encoding_prediction(trainer.data)
-            with open(f'{self.encodings_dir}/{it}.enc', 'wb') as f:
-                pickle.dump(encodings, f, protocol=pickle.HIGHEST_PROTOCOL)
 
         return intercept
 

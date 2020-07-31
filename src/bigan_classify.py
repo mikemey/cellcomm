@@ -80,6 +80,10 @@ def print_dot():
 
 
 class ClassifyCellBiGan(BasicBiGan):
+    TRAIN_GENERATOR = (True, False, False)
+    TRAIN_ENCODER = (False, True, False)
+    TRAIN_DISCRIMINATOR = (False, False, True)
+
     def __init__(self, encoding_size, gene_size,
                  generator_factory: Callable[[int, int], Model] = _build_generator,
                  encoder_factory: Callable[[int, int], Model] = _build_encoder,
@@ -141,15 +145,21 @@ class ClassifyCellBiGan(BasicBiGan):
 
         return g_loss, e_loss, d_loss
 
+    def _set_trainings_mode(self, mode):
+        self._generator.trainable, self._encoder.trainable, self._discriminator.trainable = mode
+
     def __train_generator(self, cell_data, encodings, noise, y_ones):
+        self._set_trainings_mode(self.TRAIN_GENERATOR)
         loss_from_discr = self._train_gen_w_discr.train_on_batch((encodings, noise), y_ones)
         loss_from_enc = self._train_gen_w_enc.train_on_batch((cell_data, noise), cell_data)
         return loss_from_discr + loss_from_enc
 
     def __train_encoder(self, cell_data, encodings, noise, y_zeros):
+        self._set_trainings_mode(self.TRAIN_ENCODER)
         loss_from_discr = self._train_enc_w_discr.train_on_batch(cell_data, y_zeros)
         loss_from_gen = self._train_enc_w_gen.train_on_batch((encodings, noise), encodings)
         return loss_from_discr + loss_from_gen
 
     def __train_discriminator(self, encodings, cell_data, target):
+        self._set_trainings_mode(self.TRAIN_DISCRIMINATOR)
         return self._discriminator.train_on_batch((encodings, cell_data), target)

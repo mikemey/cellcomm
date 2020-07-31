@@ -6,69 +6,71 @@ from datetime import datetime
 import sys
 
 from cell_type_training import CellTraining, load_matrix
+from db_recorder import DbRecorder
 from training_interceptors import ParamInterceptors, combined_interceptor, skip_iterations, offset_iterations
 
 
-def data_file(data_file_):
-    return os.path.join(os.path.dirname(__file__), '..', 'data', data_file_)
+def data_file(file):
+    return os.path.join(os.path.dirname(__file__), '..', 'data', file)
 
 
 def log_file(log_file_):
     return os.path.join('logs', log_file_)
 
 
-MATRIX_FILES = [
-    'GSE122930_TAC_1_week_repA+B_matrix.mtx',
-    'GSE122930_TAC_4_weeks_repA+B_matrix.mtx',
-    'GSE122930_Sham_1_week_matrix.mtx',
-    'GSE122930_Sham_4_weeks_repA+B_matrix.mtx',
-    'GSE122930_TAC_4_weeks_small_sample.mtx'
+def build_source(source_id):
+    return {
+        'matrix': data_file(f'{source_id}_matrix.mtx'),
+        'barcodes': data_file(f'{source_id}_barcodes.tsv'),
+        'genes': data_file(f'{source_id}_genes.tsv')
+    }
+
+
+SOURCE_IDS = [
+    'GSE122930_TAC_1_week_repA+B',
+    'GSE122930_TAC_4_weeks_repA+B',
+    'GSE122930_Sham_1_week',
+    'GSE122930_Sham_4_weeks_repA+B'
 ]
 
-CELL_FILES = [
-    'GSE122930_TAC_1_week.cell',
-    'GSE122930_TAC_4_weeks.cell',
-    'GSE122930_Sham_1_week.cell',
-    'GSE122930_Sham_4_weeks.cell',
-    'GSE122930_TAC_4_weeks_small.cell'
-]
+SOURCES = [build_source(src) for src in SOURCE_IDS]
 
 
-def create_interceptors(log_dir_, run_id_, trainer_):
-    ics = ParamInterceptors(log_dir_, run_id_)
+def create_interceptors(log_dir, run_id, trainer, sources):
+    ics = ParamInterceptors(log_dir, run_id)
+    db_rec = DbRecorder(run_id, sources)
+    db_rec.store_encoding_run()
+    db_rec.load_barcodes()
     return combined_interceptor([
         ics.print_losses,
         ics.save_losses(),
-        offset_iterations(500, skip_iterations(5, ics.save_accuracy(trainer_))),
-        # ics.plot_clusters_on_data(trainer_),
-        # skip_iterations(100, ics.plot_encodings_directly(trainer_)),
-        offset_iterations(5000, skip_iterations(10, ics.save_encodings(trainer_))),
+        offset_iterations(1000, skip_iterations(40, db_rec.create_interceptor(trainer)))
         # lambda _, __: print('-|')
     ])
 
 
-def check_log_dir(log_dir_):
-    log_path = pathlib.Path(log_dir_)
+def check_log_dir(log_dir):
+    log_path = pathlib.Path(log_dir)
     if log_path.exists():
-        raise AssertionError(f'duplicate run-id, log-dir: {log_dir_}')
+        raise AssertionError(f'duplicate run-id, log-dir: {log_dir}')
     log_path.mkdir(parents=True)
 
 
-RUN_ID_TEMPLATE = '{}_TAC4-vlr50000-e_{}'
+RUN_ID = 'TAC4-LWR20000'
+DATA_SOURCE = SOURCES[1]
+LOG_ID_TEMPLATE = '{}_' + RUN_ID + '_e{}'
 
 
-def run_training(source_file=MATRIX_FILES[1], batch_size=128):
-    data_source = load_matrix(data_file(source_file), verbose=True)
-    for encoding_size in range(3, 5):
-        now = datetime.now().strftime('%m-%d-%H%M')
-        run_id = RUN_ID_TEMPLATE.format(now, encoding_size)
-        log_dir = log_file(run_id)
+def run_training(batch_size=128):
+    data_source = load_matrix(DATA_SOURCE['matrix'], verbose=True)
+    encoding_size = 3
+    now = datetime.now().strftime('%m-%d-%H%M')
+    log_dir = log_file(LOG_ID_TEMPLATE.format(now, encoding_size))
 
-        check_log_dir(log_dir)
-        trainer = CellTraining(data_source, batch_size=batch_size, encoding_size=encoding_size)
-        # trainer.network.summary()
-        interceptors = create_interceptors(log_dir, run_id, trainer)
-        trainer.run(50000, interceptor=interceptors)
+    check_log_dir(log_dir)
+    trainer = CellTraining(data_source, batch_size=batch_size, encoding_size=encoding_size)
+    interceptors = create_interceptors(log_dir, RUN_ID, trainer, DATA_SOURCE)
+    trainer.run(20000, interceptor=interceptors)
 
 
 def store_converted_cell_file(matrix_file, cell_file):
