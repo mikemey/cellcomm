@@ -12,6 +12,7 @@ def load_file(file, converter, skip=0):
 
 
 def convert_matrix(source_id, barcodes, genes, matrix):
+    print(f'converting matrix ... ', end='', flush=True)
     current_id, cells, cell_record = 0, [], {}
     for gene_line_num, barcode_line_num, p_val in matrix:
         if barcode_line_num != current_id:
@@ -32,6 +33,7 @@ def convert_matrix(source_id, barcodes, genes, matrix):
             'v': int(p_val)
         })
     sort_cell_genes_by_value(cells)
+    print('DONE')
     return cells
 
 

@@ -35,7 +35,7 @@ class DbRecorderCase(DbTestCase):
         invalid_srcs['barcodes'] = invalid_file
         with self.assertRaises(AssertionError) as cm:
             DbRecorder('fail-run-id', invalid_srcs)
-        self.assertEqual(str(cm.exception), f'File for "barcodes" not found: {invalid_file}')
+        self.assertEqual(str(cm.exception), f'File not found: {invalid_file}')
 
     def test_stores_encoding_run(self):
         self.recorder.store_encoding_run()

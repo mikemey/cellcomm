@@ -8,7 +8,7 @@ from pymongo.collection import Collection
 from db_recorder.import_barcodes import import_barcodes
 
 MONGO_URL = 'mongodb://localhost:27017/'
-MONGO_DB = 'cellcomm'
+MONGO_DB = 'cellcomm-update'
 ENCODINGS_COLLECTION = 'encs'
 ITERATIONS_COLLECTION = 'encits'
 CELLS_COLLECTION = 'cells'
@@ -19,18 +19,17 @@ def get_file_name(full_path):
 
 
 def check_files(sources):
-    for src_type in sources:
-        src_file = sources[src_type]
-        assert os.path.exists(src_file), f'File for "{src_type}" not found: {src_file}'
+    for src in sources:
+        assert os.path.exists(src), f'File not found: {src}'
 
 
 class DbRecorder:
     def __init__(self, enc_run_id, sources, m_db=MONGO_DB):
-        check_files(sources)
         self.enc_run_id = enc_run_id
         self.matrix_file = sources['matrix']
         self.barcodes_file = sources['barcodes']
         self.genes_file = sources['genes']
+        check_files([self.matrix_file, self.barcodes_file, self.genes_file])
         self.mongo_db = m_db
         self.source_id = None
         self.barcodes = None
