@@ -36,6 +36,7 @@ class DbRecorder:
         self.barcodes = None
         self.cell_ids = None
         self.__db = MongoClient(MONGO_URL)[self.mongo_db]
+        self.__processed_its = []
 
     def __coll(self, coll_name) -> Collection:
         return self.__db[coll_name]
@@ -74,6 +75,8 @@ class DbRecorder:
         assert self.barcodes, 'Cannot store iterations without barcodes!'
 
         def intercept(it, _):
+            assert it not in self.__processed_its, f'duplicate iteration {it}'
+            self.__processed_its.append(it)
             encodings = trainer.network.encoding_prediction(trainer.data)
             enc_shape = encodings.shape
             assert enc_shape[0] == len(self.barcodes), \

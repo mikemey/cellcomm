@@ -106,7 +106,6 @@ class DbRecorderCase(DbTestCase):
             [0.5, 0.5, 0.5], [1.0, 0.2, 1.0]
         ])
         trainer_mock = MagicMock()
-        trainer_mock.data = UNUSED_DATA
         trainer_mock.network.encoding_prediction = MagicMock(return_value=test_encs)
         self.recorder.store_encoding_run()
         self.recorder.load_barcodes()
@@ -152,3 +151,19 @@ class DbRecorderCase(DbTestCase):
         with self.assertRaises(AssertionError) as cm:
             self.recorder.create_interceptor(trainer_mock)(2, UNUSED_DATA)
         self.assertEqual(str(cm.exception), f'encodings vector length = 2, not in x, y, z format')
+
+    def test_duplicate_iteration(self):
+        test_it = 2009
+        test_encs = np.array([
+            [0.5, 0.5, 0.0], [1.0, 0.2, 1.0], [0.5, 0.5, 0.5],
+            [0.5, 0.5, 0.5], [1.0, 0.2, 1.0]
+        ])
+        trainer_mock = MagicMock()
+        trainer_mock.network.encoding_prediction = MagicMock(return_value=test_encs)
+        self.recorder.store_encoding_run()
+        self.recorder.load_barcodes()
+        intercept = self.recorder.create_interceptor(trainer_mock)
+        intercept(test_it, UNUSED_DATA)
+        with self.assertRaises(AssertionError) as cm:
+            intercept(test_it, UNUSED_DATA)
+        self.assertEqual(str(cm.exception), f'duplicate iteration {test_it}')
