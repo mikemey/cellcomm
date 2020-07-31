@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 
+import numpy as np
 from pymongo import MongoClient
 from pymongo.collection import Collection
 
@@ -20,8 +21,7 @@ def get_file_name(full_path):
 def check_files(sources):
     for src_type in sources:
         src_file = sources[src_type]
-        if not os.path.exists(src_file):
-            raise ValueError(f'File for "{src_type}" not found: {src_file}')
+        assert os.path.exists(src_file), f'File for "{src_type}" not found: {src_file}'
 
 
 class DbRecorder:
@@ -34,19 +34,22 @@ class DbRecorder:
         self.mongo_db = m_db
         self.source_id = None
         self.barcodes = None
+        self.cell_ids = None
         self.__db = MongoClient(MONGO_URL)[self.mongo_db]
 
     def __coll(self, coll_name) -> Collection:
         return self.__db[coll_name]
 
     def store_encoding_run(self):
-        if self.__coll(ENCODINGS_COLLECTION).find_one({'_id': self.enc_run_id}):
-            raise ValueError(f'Encoding run id already exists: {self.enc_run_id}')
+        assert self.__coll(ENCODINGS_COLLECTION).find_one({'_id': self.enc_run_id}) is None, \
+            f'Encoding run id already exists: {self.enc_run_id}'
+
         self.source_id = get_file_name(self.barcodes_file)
         encoding = {
             '_id': self.enc_run_id,
             'date': datetime.now(),
             'defit': 0,
+            'showits': [0],
             'srcs': {
                 'matrix': get_file_name(self.matrix_file),
                 'barcodes': self.source_id,
@@ -56,8 +59,7 @@ class DbRecorder:
         self.__coll(ENCODINGS_COLLECTION).insert_one(encoding)
 
     def load_barcodes(self):
-        if not self.source_id:
-            raise ValueError('Cannot load barcodes without encoding!')
+        assert self.source_id, 'Cannot load barcodes without encoding!'
         cells = self.__coll(CELLS_COLLECTION)
         query = {'sid': self.source_id}
         if cells.count_documents(query) == 0:
@@ -65,25 +67,44 @@ class DbRecorder:
                 self.source_id, self.matrix_file, self.barcodes_file, self.genes_file,
                 MONGO_URL, self.mongo_db, CELLS_COLLECTION
             )
-        self.barcodes = list(cells.find(query, {'_id': 0}))
+        self.barcodes = [cell['n'] for cell in cells.find(query, {'_id': 0, 'n': 1})]
+        self.cell_ids = [cell_id_from(i) for i in range(len(self.barcodes))]
 
-    def store_iteration(self):
-        if not self.barcodes:
-            raise ValueError('Cannot store iteration without barcodes!')
-    # def save_encodings(self, trainer: CellTraining):
-    #     def intercept(it, _):
-    #         encodings = trainer.network.encoding_prediction(trainer.data)
-    #
-    #         encoding = {
-    #             '_id': iteration_,
-    #             'pids': ids,
-    #             'ns': names,
-    #             'xs': coords_[:, 0].tolist(),
-    #             'ys': coords_[:, 1].tolist(),
-    #             'zs': coords_[:, 2].tolist()
-    #         }
-    # self.encodings_coll.insert_one(encoding)
-    #         with open(f'{self.encodings_dir}/{it}.enc', 'wb') as f:
-    #             pickle.dump(encodings, f, protocol=pickle.HIGHEST_PROTOCOL)
-    #
-    #     return intercept
+    def create_interceptor(self, trainer):
+        assert self.barcodes, 'Cannot store iterations without barcodes!'
+
+        def intercept(it, _):
+            encodings = trainer.network.encoding_prediction(trainer.data)
+            enc_shape = encodings.shape
+            assert enc_shape[0] == len(self.barcodes), \
+                f'encodings + barcodes have different length: {enc_shape[0]} != {len(self.barcodes)}'
+            assert enc_shape[1] == 3, \
+                f'encodings vector length = {enc_shape[1]}, not in x, y, z format'
+
+            coords = np.multiply(encodings, 255)
+            self.__coll(ITERATIONS_COLLECTION).insert_one({
+                'eid': self.enc_run_id,
+                'it': it,
+                'cids': self.cell_ids,
+                'ns': self.barcodes,
+                'xs': coords[:, 0].tolist(),
+                'ys': coords[:, 1].tolist(),
+                'zs': coords[:, 2].tolist(),
+                'ds': find_duplicate_ids(coords)
+            })
+            self.__coll(ENCODINGS_COLLECTION).update_one(
+                {'_id': self.enc_run_id}, {'$set': {'defit': it}}
+            )
+
+        return intercept
+
+
+def find_duplicate_ids(np_coords: np.array):
+    coords = [(c[0], c[1], c[2]) for c in np_coords]
+    unique_coords = set(coords)
+    all_indices = [[cell_id_from(i) for i, x in enumerate(coords) if x == uc] for uc in unique_coords]
+    return [ixs for ixs in all_indices if len(ixs) > 1]
+
+
+def cell_id_from(ix):
+    return ix + 1
