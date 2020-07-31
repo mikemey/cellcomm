@@ -81,3 +81,14 @@ class DbRecorderCase(DbTestCase):
         self.recorder.store_encoding_run()
         self.recorder.load_barcodes()
         self.assertEqual(test_cells, self.recorder.barcodes[0])
+
+    def test_load_barcodes_without_store_encodings(self):
+        with self.assertRaises(ValueError) as cm:
+            self.recorder.load_barcodes()
+        self.assertIsNone(self.recorder.barcodes)
+        self.assertEqual(str(cm.exception), f'Cannot load barcodes without encoding!')
+
+    def test_store_without_load_barcodes(self):
+        with self.assertRaises(ValueError) as cm:
+            self.recorder.store_iteration()
+        self.assertEqual(str(cm.exception), f'Cannot store iteration without barcodes!')

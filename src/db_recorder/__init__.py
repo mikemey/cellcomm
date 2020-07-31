@@ -56,6 +56,8 @@ class DbRecorder:
         self.__coll(ENCODINGS_COLLECTION).insert_one(encoding)
 
     def load_barcodes(self):
+        if not self.source_id:
+            raise ValueError('Cannot load barcodes without encoding!')
         cells = self.__coll(CELLS_COLLECTION)
         query = {'sid': self.source_id}
         if cells.count_documents(query) == 0:
@@ -65,6 +67,9 @@ class DbRecorder:
             )
         self.barcodes = list(cells.find(query, {'_id': 0}))
 
+    def store_iteration(self):
+        if not self.barcodes:
+            raise ValueError('Cannot store iteration without barcodes!')
     # def save_encodings(self, trainer: CellTraining):
     #     def intercept(it, _):
     #         encodings = trainer.network.encoding_prediction(trainer.data)
