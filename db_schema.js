@@ -3,6 +3,7 @@
 //    _id: <enc-run-id>,
 //    date: <run-date>,
 //    defit: <default-iteration>,
+//    showits: [ <UI-iteration-option>, ...],
 //    srcs: {
 //      matrix: <matrix-file>,
 //      barcodes: <barcodes-file>,
@@ -38,6 +39,10 @@
 //    ]
 //  }
 
+//  db.cells.updateMany({ sid: 'GSE122930_TAC_4_weeks_repA+B' }, { $set: { sid: 'GSE122930_TAC_4_weeks_repA+B_barcodes.tsv' }})
+//  db.encs.updateOne({ _id: 'VLR50000' }, { $rename: { src: 'srcs' }})
+//  db.encs.updateOne({ _id: 'VLR50000' }, { $set: { srcs: { matrix: 'GSE122930_TAC_4_weeks_repA+B_matrix.mtx', barcodes: 'GSE122930_TAC_4_weeks_repA+B_barcodes.tsv', genes: 'GSE122930_TAC_4_weeks_repA+B_genes.tsv' } } })
+//  db.encs.updateOne({ _id: 'VLR50000' }, { $set: { showits: Array.from({ length: 450 }, (_, ix) => 5009 + ix * 100) } })
 
 //const cnt = db.cells.count()
 //var ix = 0

@@ -1,7 +1,5 @@
 /* global $ Plotly location history */
 
-const iterationOptions = Array.from({ length: 450 }, (_, ix) => 5009 + ix * 100)
-
 const transparentColor = 'rgba(0,0,0,0)'
 const layout = {
   showlegend: false,
@@ -31,10 +29,14 @@ const page = {
 }
 
 $(() => {
+  setPageDataFromUrl()
   addThresholdListeners()
   loadIterationsSelect()
-  loadDataFromUrl()
-  $(window).on('popstate', loadDataFromUrl)
+  updatePlot()
+  $(window).on('popstate', () => {
+    setPageDataFromUrl()
+    updatePlot()
+  })
 })
 
 const addThresholdListeners = () => {
@@ -47,21 +49,20 @@ const addThresholdListeners = () => {
 
 const updatePageThreshold = () => { page.threshold = parseInt($('#threshold').val()) }
 
-const loadDataFromUrl = () => {
+const setPageDataFromUrl = () => {
   const segments = $(location).attr('href').split('/')
   page.iteration = segments.pop()
   page.encodingId = segments.pop()
   page.basePath = segments.join('/')
-  $('#iterations').val(page.iteration)
-  updatePlot()
 }
 
-const loadIterationsSelect = () => {
+const loadIterationsSelect = () => ensureEncoding().then(() => {
   const iterationSelect = $('#iterations')
   iterationSelect.empty()
-  iterationOptions.forEach(it => iterationSelect.append(`<option>${it}</option>`))
+  page.encoding.showits.forEach(it => iterationSelect.append(`<option>${it}</option>`))
   iterationSelect.change(updateIteration)
-}
+  $('#iterations').val(page.iteration)
+})
 
 const updateIteration = () => {
   page.iteration = $('#iterations').find(':selected').text()

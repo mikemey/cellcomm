@@ -11,9 +11,9 @@ describe('Cellan API', () => {
   const requestCell = (dataId, cid) => server.request().get(`${path}/api/cell/${dataId}/${cid}`)
 
   const testEncodings = [
-    { _id: 'VLR5000', date: null, defit: 8009, srcs: { barcodes: 'GSE122930_Sham_1_week_barcodes.tsv' } },
-    { _id: 'TESTRUN', date: null, defit: 29, srcs: { barcodes: 'GSE122930_Sham_4_weeks_repA+B_barcodes.tsv' } },
-    { _id: 'LR9990', date: null, defit: 1412, srcs: { barcodes: 'GSE122930_Sham_4_week_barcodes.tsv' } }
+    { _id: 'VLR5000', date: null, defit: 8009, showits: [20, 30], srcs: { barcodes: 'GSE122930_Sham_1_week_barcodes.tsv' } },
+    { _id: 'TESTRUN', date: null, defit: 29, showits: [20, 30], srcs: { barcodes: 'GSE122930_Sham_4_weeks_repA+B_barcodes.tsv' } },
+    { _id: 'LR9990', date: null, defit: 1412, showits: [20, 30], srcs: { barcodes: 'GSE122930_Sham_4_week_barcodes.tsv' } }
   ]
 
   const testIterations = [
