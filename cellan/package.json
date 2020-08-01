@@ -6,7 +6,6 @@
     "node": ">=10"
   },
   "scripts": {
-    "prestart": "npm install",
     "start": "node index.js",
     "lint": "standard",
     "specs": "NODE_ENV=TEST mocha 'test/**/**.spec.js' -r chai/register-should",
