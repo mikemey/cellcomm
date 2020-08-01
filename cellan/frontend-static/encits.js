@@ -139,7 +139,7 @@ const ensureEncoding = () => page.encoding
 
 const getEncodingIteration = (encId, it) => apiGet(`encit/${encId}/${it}`)
 const getCell = cid => ensureEncoding()
-  .then(() => apiGet(`cell/${page.encoding.src}/${cid}`))
+  .then(() => apiGet(`cell/${page.encoding.srcs.barcodes}/${cid}`))
 
 const showLoader = () => $('#loader').removeClass('invisible')
 const hideLoader = () => $('#loader').addClass('invisible')
