@@ -85,7 +85,17 @@ const updatePlot = () => {
 }
 
 const createMarkers = cellPoints => {
-  const text = cellPoints.ns.map((name, ix) => `${cellPoints.cids[ix]}<br>${name}`)
+  const dupsLookup = []
+  cellPoints.ds.forEach(dups => dups.forEach(dupCellId => {
+    dupsLookup.push({ cid: dupCellId, cids: dups })
+  }))
+
+  const text = cellPoints.ns.map((name, ix) => {
+    const cellId = cellPoints.cids[ix]
+    const dups = dupsLookup.find(d => d.cid === cellId)
+    const countText = (dups && `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(${dups.cids.length} dups)`) || ''
+    return `${cellId}${countText}<br>${name}`
+  })
   return [{
     ids: cellPoints.cids,
     text,
@@ -108,7 +118,6 @@ const showCellDetails = point => {
   return getCell(cellId)
     .then(cell => {
       page.cell = cell
-      $('#cell-id').text(`${cell.n} (${cellId})`)
       updateCellGenes()
     })
     .always(hideLoader)
@@ -116,6 +125,7 @@ const showCellDetails = point => {
 
 const updateCellGenes = () => {
   if (page.cell && Number.isInteger(page.threshold)) {
+    $('#cell-id').text(`${page.cell.n} (${page.cell.cid})`)
     const genesTable = $('#cell-genes')
     const template = $('.gene-template').first()
     genesTable.empty()
