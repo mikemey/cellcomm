@@ -24,13 +24,16 @@ const page = {
   encodingId: 0,
   encoding: null,
   iteration: 0,
+  duplicatesLookup: null,
   cell: null,
   threshold: 0
 }
 
+const getDuplicateEntry = cellId => page.duplicatesLookup.find(d => d.cid === cellId)
+
 $(() => {
   setPageDataFromUrl()
-  addThresholdListeners()
+  addLoadListeners()
   loadIterationsSelect()
   updatePlot()
   $(window).on('popstate', () => {
@@ -39,10 +42,15 @@ $(() => {
   })
 })
 
-const addThresholdListeners = () => {
+const addLoadListeners = () => {
   $('#threshold').change(() => {
     updatePageThreshold()
-    updateCellGenes()
+    updateCellDetails()
+  })
+  const dupCellsSelect = $('#duplicate-cell-ids')
+  dupCellsSelect.change(() => {
+    const cellId = dupCellsSelect.find(':selected').val()
+    return loadCellDetails(cellId)
   })
   updatePageThreshold()
 }
@@ -74,72 +82,100 @@ const updateIteration = () => {
 const updatePlot = () => {
   showLoader()
   return getEncodingIteration(page.encodingId, page.iteration)
-    .then(cellPoints => {
-      const graphDiv = $('#cell-graph').get(0)
-      const markers = createMarkers(cellPoints)
+    .then(encIteration => {
+      updateDuplicates(encIteration)
+      const markers = createMarkers(encIteration)
 
+      const graphDiv = $('#cell-graph').get(0)
       Plotly.newPlot(graphDiv, markers, layout, display)
-      graphDiv.on('plotly_click', ev => showCellDetails(ev.points[0]))
+      graphDiv.on('plotly_click', ev => {
+        const point = ev.points[0]
+        const cellId = point.data.ids[point.pointIndex]
+        loadCellDetails(cellId)
+      })
       graphDiv.on('plotly_afterplot', hideLoader)
     })
 }
 
-const createMarkers = cellPoints => {
-  const dupsLookup = []
-  cellPoints.ds.forEach(dups => dups.forEach(dupCellId => {
-    dupsLookup.push({ cid: dupCellId, cids: dups })
+const updateDuplicates = encIteration => {
+  page.duplicatesLookup = []
+  encIteration.ds.forEach(dups => dups.forEach(dupCellId => {
+    const pointIx = encIteration.cids.indexOf(dupCellId)
+    const name = encIteration.ns[pointIx]
+    page.duplicatesLookup.push({ cid: dupCellId, name, cids: dups })
   }))
+}
 
-  const text = cellPoints.ns.map((name, ix) => {
-    const cellId = cellPoints.cids[ix]
-    const dups = dupsLookup.find(d => d.cid === cellId)
-    const countText = (dups && `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(${dups.cids.length} dups)`) || ''
-    return `${cellId}${countText}<br>${name}`
+const createMarkers = encIteration => {
+  const text = encIteration.ns.map((name, ix) => {
+    const cellId = encIteration.cids[ix]
+    const dups = getDuplicateEntry(cellId)
+    const countText = (dups && `&nbsp;&nbsp;&nbsp;&nbsp;(${dups.cids.length} dups)`) || ''
+    return `${name}<br>${cellId}${countText}`
   })
   return [{
-    ids: cellPoints.cids,
+    ids: encIteration.cids,
     text,
-    x: cellPoints.xs,
-    y: cellPoints.ys,
+    x: encIteration.xs,
+    y: encIteration.ys,
     mode: 'markers',
     type: 'scattergl',
     hoverinfo: 'text',
     marker: {
       size: 4,
-      color: cellPoints.zs,
+      color: encIteration.zs,
       colorscale: 'Jet'
     }
   }]
 }
 
-const showCellDetails = point => {
+const loadCellDetails = cellId => {
   showLoader()
-  const cellId = point.data.ids[point.pointIndex]
   return getCell(cellId)
     .then(cell => {
       page.cell = cell
-      updateCellGenes()
+      updateCellDetails()
     })
     .always(hideLoader)
 }
 
-const updateCellGenes = () => {
+const updateCellDetails = () => {
   if (page.cell && Number.isInteger(page.threshold)) {
-    $('#cell-id').text(`${page.cell.n} (${page.cell.cid})`)
+    updateCellDetailsHeader()
     const genesTable = $('#cell-genes')
     const template = $('.gene-template').first()
     genesTable.empty()
-    page.cell.g
+    genesTable.append(page.cell.g
       .filter(gene => gene.v > page.threshold)
-      .forEach(gene => {
+      .map(gene => {
         const geneRow = template.clone()
         geneRow.find('.ensemble').text(gene.e)
         geneRow.find('.mgi').text(gene.m)
         geneRow.find('.gval').text(gene.v)
-        genesTable.append(geneRow)
+        return geneRow
       })
+    )
   }
 }
+
+const updateCellDetailsHeader = () => {
+  const dupsEntry = getDuplicateEntry(page.cell.cid)
+  if (dupsEntry) {
+    showDuplicateCells()
+    const cellSelect = $('#duplicate-cell-ids')
+    cellSelect.empty()
+    cellSelect.append(dupsEntry.cids.map(cid => {
+      const name = getDuplicateEntry(cid).name
+      return `<option value="${cid}">${cellDisplayName(cid, name)}</option>`
+    }))
+    cellSelect.val(page.cell.cid)
+  } else {
+    showSingleCell()
+    $('#single-cell-id').text(cellDisplayName(page.cell.cid, page.cell.n))
+  }
+}
+
+const cellDisplayName = (id, name) => `${name} (#${id})`
 
 const apiGet = sub => $.get(`${page.basePath}/api/${sub}`)
 
@@ -152,5 +188,15 @@ const getEncodingIteration = (encId, it) => apiGet(`encit/${encId}/${it}`)
 const getCell = cid => ensureEncoding()
   .then(() => apiGet(`cell/${page.encoding.srcs.barcodes}/${cid}`))
 
-const showLoader = () => $('#loader').removeClass('invisible')
-const hideLoader = () => $('#loader').addClass('invisible')
+const showLoader = () => $('#loader').removeClass('d-none')
+const hideLoader = () => $('#loader').addClass('d-none')
+
+const showSingleCell = () => {
+  $('#single-cell-row').removeClass('d-none')
+  $('#duplicate-cells-row').addClass('d-none')
+}
+
+const showDuplicateCells = () => {
+  $('#single-cell-row').addClass('d-none')
+  $('#duplicate-cells-row').removeClass('d-none')
+}

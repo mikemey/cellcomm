@@ -29,10 +29,13 @@ block content
               td.ensemble.w-50(scope="row")= 'Ensembl'
               td.mgi= 'MGI'
               td.gval.text-right= 'value'
-            tr
-              th#cell-id.text-center(scope="col" colspan="3")= 'click point in plot'
+            tr#single-cell-row.text-center
+              th#single-cell-id(scope="col" colspan="3")= 'click point in plot'
+            tr#duplicate-cells-row.text-center.d-none
+              td(scope="col" colspan="3")
+                select#duplicate-cell-ids
           tbody#cell-genes
-        .invisible
+        .d-none
           table
             tr.gene-template
               td.ensemble.w-50(scope="row")
