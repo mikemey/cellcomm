@@ -6,16 +6,20 @@ block content
     if params.error === 'it'
       .alert.alert-secondary(role="alert")= `Invalid iteration #${params.it} for "${params.eid}"`
     h4.my-4.text-center= 'Select encoding run'
-    table.table
+    table.table.text-center
       thead
         tr
-          th(scope="col")= 'run #'
-          th(scope="col")= 'date'
-          th(scope="col")= 'data source'
+          th.col-3(scope="col")= 'run'
+          th.col-3(scope="col")= 'date'
+          th(scope="col")= 'sources'
       tbody.small
         each enc in encodings
           tr
-            td(scope="row")
+            td.align-middle(scope="row")
               a(href=`${basepath}/${enc._id}/${enc.defit}`)= enc._id
-            td= moment.utc(enc.date).format('YYYY-MM-DD HH:mm')
-            td= enc.src
+            td.align-middle= moment.utc(enc.date).format('YYYY-MM-DD HH:mm')
+            td.align-middle= enc.srcs.matrix
+              br
+              | #{enc.srcs.barcodes}
+              br
+              | #{enc.srcs.genes}

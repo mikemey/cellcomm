@@ -11,9 +11,9 @@ describe('Cellan API', () => {
   const requestCell = (dataId, cid) => server.request().get(`${path}/api/cell/${dataId}/${cid}`)
 
   const testEncodings = [
-    { _id: 'VLR5000', date: null, defit: 8009, src: 'GSE122930_Sham_1_week' },
-    { _id: 'TESTRUN', date: null, defit: 29, src: 'GSE122930_Sham_4_weeks_repA+B' },
-    { _id: 'LR9990', date: null, defit: 1412, src: 'GSE122930_Sham_4_week' }
+    { _id: 'VLR5000', date: null, defit: 8009, srcs: { barcodes: 'GSE122930_Sham_1_week_barcodes.tsv' } },
+    { _id: 'TESTRUN', date: null, defit: 29, srcs: { barcodes: 'GSE122930_Sham_4_weeks_repA+B_barcodes.tsv' } },
+    { _id: 'LR9990', date: null, defit: 1412, srcs: { barcodes: 'GSE122930_Sham_4_week_barcodes.tsv' } }
   ]
 
   const testIterations = [
@@ -23,9 +23,9 @@ describe('Cellan API', () => {
   ]
 
   const testCells = [
-    { sid: 'GSE122930_Sham_1_week', cid: 1, n: 'AAACGGGTCTGATTCT-1', g: [1] },
-    { sid: 'GSE122930_Sham_1_week', cid: 2, n: 'AAACGGGTCTGATTCT-2', g: [2] },
-    { sid: 'GSE122930_Sham_1_week', cid: 3, n: 'AAACGGGTCTGATTCT-3', g: [3] }
+    { sid: 'GSE122930_Sham_1_week_barcodes.tsv', cid: 1, n: 'AAACGGGTCTGATTCT-1', g: [1] },
+    { sid: 'GSE122930_Sham_1_week_barcodes.tsv', cid: 2, n: 'AAACGGGTCTGATTCT-2', g: [2] },
+    { sid: 'GSE122930_Sham_1_week_barcodes.tsv', cid: 3, n: 'AAACGGGTCTGATTCT-3', g: [3] }
   ]
 
   const clearDatabaseIdsFromTestData = () => {
@@ -60,10 +60,10 @@ describe('Cellan API', () => {
   })
 
   describe('cells', () => {
-    it('invalid cell-id -> 404', () => requestCell('GSE122930_Sham_1_week', '5').expect(404))
+    it('invalid cell-id -> 404', () => requestCell('GSE122930_Sham_1_week_barcodes.tsv', '5').expect(404))
     it('invalid data-id -> 404', () => requestCell('5', '3').expect(404))
 
-    it('valid cell-id -> returns cell', () => requestCell('GSE122930_Sham_1_week', '3')
+    it('valid cell-id -> returns cell', () => requestCell('GSE122930_Sham_1_week_barcodes.tsv', '3')
       .expect(200, testCells[2])
     )
   })

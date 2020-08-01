@@ -7,7 +7,7 @@ describe('Encoding iteration page', () => {
   const testPath = server.cfg.serverPath
   const requestEncitsPage = (encPath, itPath) => server.request().get(`${testPath}${encPath}${itPath}`)
 
-  const testEncodings = [{ _id: 'ABC', defit: 20, src: 'test-source' }]
+  const testEncodings = [{ _id: 'ABC', defit: 20, srcs: {} }]
   const testIterations = [{ eid: 'ABC', it: 20 }, { eid: 'ABC', it: 21 }]
 
   before(() => server.start()
