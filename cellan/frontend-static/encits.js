@@ -146,7 +146,7 @@ const updateCellDetails = () => {
     const template = $('.gene-template').first()
     genesTable.empty()
     genesTable.append(page.cell.g
-      .filter(gene => gene.v > page.threshold)
+      .filter(gene => gene.v >= page.threshold)
       .map(gene => {
         const geneRow = template.clone()
         geneRow.find('.ensemble').text(gene.e)
