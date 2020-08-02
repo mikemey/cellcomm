@@ -11,6 +11,7 @@ const testConfig = {
     dbName: 'cellcomm-test',
     cellsColl: 'cells',
     encodingsColl: 'encs',
+    genesColl: 'genes',
     iterationsColl: 'encits'
   }
 }
@@ -44,6 +45,10 @@ class TestServer extends CellanServer {
 
   insertCells (data) {
     return this.testDb.collection(testConfig.mongodb.cellsColl).insertMany(data)
+  }
+
+  insertGenes (data) {
+    return this.testDb.collection(testConfig.mongodb.genesColl).insertMany(data)
   }
 
   getCollectionIndices (name) {

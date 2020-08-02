@@ -5,19 +5,19 @@ const mainPage = 'main'
 
 const saveEncode = param => param && encodeURIComponent(param)
 
-const createHtmlRouter = (encodingsColl, iterationsColl, config) => {
+const createHtmlRouter = (colls, config) => {
   const router = express.Router()
 
   const basePath = sub => `${config.serverPath}${sub}`
 
-  router.get('/', (req, res) => encodingsColl.find({}).toArray()
+  router.get('/', (req, res) => colls.encs.find({}).toArray()
     .then(encodings => res.render(mainPage, { encodings, moment, params: req.query }))
   )
 
   router.get('/:encId?/:it?', (req, res) => {
     const eid = saveEncode(req.params.encId)
     const queryIt = saveEncode(req.params.it)
-    return encodingsColl.findOne({ _id: eid })
+    return colls.encs.findOne({ _id: eid })
       .then(encRun => {
         if (!encRun) {
           return res.redirect(303, basePath(`?error=enc&eid=${eid}`))
@@ -26,7 +26,7 @@ const createHtmlRouter = (encodingsColl, iterationsColl, config) => {
           return res.redirect(303, basePath(`/${eid}/${encRun.defit}`))
         }
         const it = parseInt(queryIt)
-        return iterationsColl.findOne({ eid, it })
+        return colls.encits.findOne({ eid, it })
           .then(iteration => {
             if (!iteration) {
               return res.redirect(303, `${config.serverPath}?error=it&eid=${eid}&it=${it}`)

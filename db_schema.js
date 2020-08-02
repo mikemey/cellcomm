@@ -38,7 +38,16 @@
 //      ...
 //    ]
 //  }
-
+//
+//  genes: {
+//    sid: <barcodes-file>,
+//    e: <ensembl-name>,
+//    m: <mgi-name>,
+//    cids: [ <cell-id>, ... ]
+//  }
+//
+//
+//
 //  db.cells.updateMany({ sid: 'GSE122930_TAC_4_weeks_repA+B' }, { $set: { sid: 'GSE122930_TAC_4_weeks_repA+B_barcodes.tsv' }})
 //  db.encs.updateOne({ _id: 'VLR50000' }, { $rename: { src: 'srcs' }})
 //  db.encs.updateOne({ _id: 'VLR50000' }, { $set: { srcs: { matrix: 'GSE122930_TAC_4_weeks_repA+B_matrix.mtx', barcodes: 'GSE122930_TAC_4_weeks_repA+B_barcodes.tsv', genes: 'GSE122930_TAC_4_weeks_repA+B_genes.tsv' } } })

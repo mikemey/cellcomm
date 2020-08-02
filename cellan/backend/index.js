@@ -15,15 +15,10 @@ const defaultConfig = {
     dbName: 'cellcomm',
     cellsColl: 'cells',
     encodingsColl: 'encs',
+    genesColl: 'genes',
     iterationsColl: 'encits'
   }
 }
-
-const ensureIndices = ([encodingsColl, iterationsColl, cellsColl]) => Promise.all([
-  iterationsColl.createIndex({ eid: 1, it: 1 }),
-  cellsColl.createIndex({ sid: 1, cid: 1 })
-]).then(() => iterationsColl.indexes())
-  .then(() => [encodingsColl, iterationsColl, cellsColl])
 
 const createRequestLogger = () => {
   morgan.token('clientIP', req => req.headers['x-forwarded-for'] || req.connection.remoteAddress)
@@ -37,6 +32,20 @@ const createStaticRouter = () => {
 }
 
 const maintenanceRouter = (_, res) => res.render('maintenance')
+
+const prepareCollections = cfg => db => Promise.all([
+  db.collection(cfg.mongodb.encodingsColl),
+  db.collection(cfg.mongodb.iterationsColl),
+  db.collection(cfg.mongodb.cellsColl),
+  db.collection(cfg.mongodb.genesColl)
+]).then(([encs, encits, cells, genes]) => {
+  const colls = { encs, encits, cells, genes }
+  return Promise.all([
+    encits.createIndex({ eid: 1, it: 1 }),
+    cells.createIndex({ sid: 1, cid: 1 }),
+    genes.createIndex({ sid: 1, m: 1 })
+  ]).then(() => colls)
+})
 
 class CellanServer {
   constructor (config = defaultConfig) {
@@ -53,13 +62,8 @@ class CellanServer {
         this.client = client
         return client.db(this.cfg.mongodb.dbName)
       })
-      .then(db => Promise.all([
-        db.collection(this.cfg.mongodb.encodingsColl),
-        db.collection(this.cfg.mongodb.iterationsColl),
-        db.collection(this.cfg.mongodb.cellsColl)
-      ]))
-      .then(ensureIndices)
-      .then(([encodingsColl, iterationsColl, cellsColl]) => {
+      .then(prepareCollections(this.cfg))
+      .then(colls => {
         const app = express()
         app.set('views', path.join(__dirname, '..', '/frontend'))
         app.set('view engine', 'pug')
@@ -77,9 +81,9 @@ class CellanServer {
           app.use(`${this.cfg.serverPath}*`, maintenanceRouter)
         } else {
           this.logger.log('default server mode')
-          app.use(`${this.cfg.serverPath}/api`, createApiRouter(encodingsColl, iterationsColl, cellsColl))
+          app.use(`${this.cfg.serverPath}/api`, createApiRouter(colls))
           app.use(`${this.cfg.serverPath}/static`, createStaticRouter())
-          app.use(`${this.cfg.serverPath}`, createHtmlRouter(encodingsColl, iterationsColl, this.cfg))
+          app.use(`${this.cfg.serverPath}`, createHtmlRouter(colls, this.cfg))
         }
 
         this.server = app.listen(this.cfg.port, this.cfg.interface)
