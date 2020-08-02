@@ -3,7 +3,7 @@
 const transparentColor = 'rgba(0,0,0,0)'
 const layout = {
   showlegend: false,
-  margin: { t: 0, l: 0, b: 0, r: 0 },
+  margin: { t: 0, l: 25, b: 25, r: 0 },
   hovermode: 'closest',
   plot_bgcolor: transparentColor,
   paper_bgcolor: transparentColor,
@@ -11,7 +11,9 @@ const layout = {
     color: 'darkgray',
     activecolor: 'black',
     bgcolor: transparentColor
-  }
+  },
+  xaxis: { range: [0, 255] },
+  yaxis: { range: [0, 255] }
 }
 const display = {
   displayModeBar: true,

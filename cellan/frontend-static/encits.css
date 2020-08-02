@@ -11,7 +11,9 @@ body {
   padding: 0.2rem 0.5rem;
 }
 
-#control select, #control input, #control button {
+#control select,
+#control input,
+#control button {
   font-size: 12px;
 }
 
@@ -29,6 +31,11 @@ body {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
