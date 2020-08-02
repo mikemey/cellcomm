@@ -34,10 +34,10 @@ const createApiRouter = colls => {
       )
   })
 
-  router.get('/gene/:sid/:mgi', (req, res) => {
+  router.get('/gene/:sid/:ens', (req, res) => {
     const sid = req.params.sid
-    const mgi = req.params.mgi
-    return colls.genes.findOne({ sid, m: mgi }, withoutIdField)
+    const ensembleId = req.params.ens
+    return colls.genes.findOne({ sid, e: ensembleId }, withoutIdField)
       .then(encData => encData
         ? res.status(200).send(encData)
         : res.status(404).end()

@@ -30,8 +30,8 @@ describe('Cellan API', () => {
   ]
 
   const testGenes = [
-    { sid: 'GSE122930_Sham_1_week_barcodes.tsv', e: 'otherID1', m: 'S100a9', cids: [1, 3, 4] },
-    { sid: 'GSE122930_Sham_1_week_barcodes.tsv', e: 'otherID2', m: 'S100a8', cids: [4] }
+    { sid: 'GSE122930_Sham_1_week_barcodes.tsv', e: 'ENSMUSG00000056071', m: 'S100a9', cids: [1, 3, 4] },
+    { sid: 'GSE122930_Sham_1_week_barcodes.tsv', e: 'ENSMUSG00000056054', m: 'S100a8', cids: [4] }
   ]
 
   const clearDatabaseIdsFromTestData = () => {
@@ -77,9 +77,9 @@ describe('Cellan API', () => {
 
   describe('gene', () => {
     it('invalid gene-id -> 404', () => requestGene('GSE122930_Sham_1_week_barcodes.tsv', 'NotHere').expect(404))
-    it('invalid data-id -> 404', () => requestGene('5', 'S100a8').expect(404))
+    it('invalid data-id -> 404', () => requestGene('5', 'ENSMUSG00000056054').expect(404))
 
-    it('valid gene-id -> returns gene', () => requestGene('GSE122930_Sham_1_week_barcodes.tsv', 'S100a8')
+    it('valid gene-id -> returns gene', () => requestGene('GSE122930_Sham_1_week_barcodes.tsv', 'ENSMUSG00000056054')
       .expect(200, testGenes[1])
     )
   })
