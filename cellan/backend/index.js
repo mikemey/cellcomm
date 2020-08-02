@@ -27,7 +27,7 @@ const ensureIndices = ([encodingsColl, iterationsColl, cellsColl]) => Promise.al
 
 const createRequestLogger = () => {
   morgan.token('clientIP', req => req.headers['x-forwarded-for'] || req.connection.remoteAddress)
-  const format = ':date[iso] [:clientIP] :res[content-length]B [:status] :method :url - :response-time[0]ms :user-agent'
+  const format = ':date[iso] [:clientIP] :status :method :url - :response-time[0]ms (:res[content-length] bytes) :user-agent'
   return morgan(format)
 }
 
