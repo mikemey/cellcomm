@@ -7,13 +7,8 @@ if [[ -z ${1} ]]; then
 fi
 
 SSH_PORT="$1"
-DB_NAME="cellcomm"
-DB_COLLS=(
-"cells"
-"encs"
-"encits"
-)
+DB_NAME="cellcomm-stage"
 
-for coll in ${DB_COLLS[@]}; do
-  mongodump --db "${DB_NAME}" --collection "${coll}" --archive | mongorestore --drop --port=${SSH_PORT} --archive
-done
+mongodump --db="${DB_NAME}" --collection="encs" --archive | mongorestore --port=${SSH_PORT} --archive
+mongodump --db="${DB_NAME}" --collection="encits" --archive | mongorestore --port=${SSH_PORT} --archive
+
