@@ -5,6 +5,8 @@ block htmlhead
   link(rel="stylesheet" href=`${basepath}/static/encits.css`)
 
 block content
+  .home-link
+    a(href=basepath)= '<< back'
   .container-fluid
     .row
       #cell-graph.col-9.vh-100

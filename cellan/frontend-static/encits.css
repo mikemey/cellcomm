@@ -2,6 +2,15 @@ body {
   font-size: 12px;
 }
 
+.home-link {
+  position: absolute;
+  z-index: 1;
+  background-color: white;
+  border-bottom: 3px solid gray;
+  border-right: 3px solid gray;
+  padding: 0.2rem 0.5rem;
+}
+
 #control select, #control input, #control button {
   font-size: 12px;
 }
