@@ -12,6 +12,7 @@ MONGO_DB = 'cellcomm-update'
 ENCODINGS_COLLECTION = 'encs'
 ITERATIONS_COLLECTION = 'encits'
 CELLS_COLLECTION = 'cells'
+GENES_COLLECTION = 'genes'
 
 
 def get_file_name(full_path):
@@ -65,7 +66,7 @@ class DbRecorder:
         if cells.count_documents(query) == 0:
             import_barcodes(
                 self.source_id, self.matrix_file, self.barcodes_file, self.genes_file,
-                MONGO_URL, self.mongo_db, CELLS_COLLECTION
+                MONGO_URL, self.mongo_db, CELLS_COLLECTION, GENES_COLLECTION
             )
         self.barcodes = [cell['n'] for cell in cells.find(query, {'_id': 0, 'n': 1})]
         self.cell_ids = [cell_id_from(i) for i in range(len(self.barcodes))]

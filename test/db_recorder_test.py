@@ -4,7 +4,8 @@ from unittest.mock import MagicMock
 
 import numpy as np
 
-from db_recorder import DbRecorder, ENCODINGS_COLLECTION, ITERATIONS_COLLECTION, CELLS_COLLECTION
+from db_recorder import DbRecorder, \
+    ENCODINGS_COLLECTION, ITERATIONS_COLLECTION, CELLS_COLLECTION, GENES_COLLECTION
 from db_test import DbTestCase, TEST_DB
 
 
@@ -87,6 +88,26 @@ class DbRecorderCase(DbTestCase):
         self.recorder.load_barcodes()
         self.assertEqual([name1, name2], self.recorder.barcodes)
         self.assertEqual([1, 2], self.recorder.cell_ids)
+
+    def test_stores_genes(self):
+        self.recorder.store_encoding_run()
+        self.recorder.load_barcodes()
+        genes = list(self._coll(GENES_COLLECTION).find({'sid': TEST_BARCODES}))
+        self.assertEqual(5, len(genes))
+        del genes[0]['_id']
+        del genes[4]['_id']
+        self.assertDictEqual(genes[0], {
+            'sid': TEST_BARCODES,
+            'e': 'ENSMUSG00000089699',
+            'm': 'Gm1992',
+            'cids': [1, 2, 3]
+        })
+        self.assertDictEqual(genes[4], {
+            'sid': TEST_BARCODES,
+            'e': 'ENSMUSG00000051951',
+            'm': 'Xkr4',
+            'cids': [2, 3, 4]
+        })
 
     def test_load_barcodes_without_store_encodings(self):
         with self.assertRaises(AssertionError) as cm:
