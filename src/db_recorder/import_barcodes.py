@@ -40,8 +40,9 @@ def convert_matrix(source_id, barcodes, genes_src, matrix):
         gene_record['cids'].append(cell_id)
 
     sort_cell_genes_by_value(cells)
+    genes_list = [genes[k] for k in genes]
     print('DONE')
-    return cells, [genes[k] for k in genes]
+    return cells, genes_list
 
 
 def sort_cell_genes_by_value(cells):
