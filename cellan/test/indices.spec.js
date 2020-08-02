@@ -18,5 +18,5 @@ describe('DB indices', () => {
     .then(ixs => ixs[1].key.should.deep.equal({ sid: 1, cid: 1 })))
 
   it('genes', () => server.getCollectionIndices(server.cfg.mongodb.genesColl)
-    .then(ixs => ixs[1].key.should.deep.equal({ sid: 1, m: 1 })))
+    .then(ixs => ixs[1].key.should.deep.equal({ sid: 1, e: 1 })))
 })

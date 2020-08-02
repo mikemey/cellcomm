@@ -43,7 +43,7 @@ const prepareCollections = cfg => db => Promise.all([
   return Promise.all([
     encits.createIndex({ eid: 1, it: 1 }),
     cells.createIndex({ sid: 1, cid: 1 }),
-    genes.createIndex({ sid: 1, m: 1 })
+    genes.createIndex({ sid: 1, e: 1 })
   ]).then(() => colls)
 })
 
