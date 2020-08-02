@@ -21,6 +21,10 @@ const display = {
   displaylogo: false
 }
 
+const createDefaultMarkerOption = color => {
+  return { size: 4, color, colorscale: 'Jet', cmin: 0, cmax: 255 }
+}
+
 const page = {
   basePath: null,
   encodingId: 0,
@@ -28,7 +32,10 @@ const page = {
   iteration: 0,
   duplicatesLookup: null,
   cell: null,
-  threshold: 0
+  geneFocus: null,
+  threshold: 0,
+  cids: null,
+  originalColors: null
 }
 
 const getDuplicateEntry = cellId => page.duplicatesLookup.find(d => d.cid === cellId)
@@ -49,12 +56,13 @@ const addLoadListeners = () => {
     updatePageThreshold()
     updateCellDetails()
   })
+  updatePageThreshold()
+
   const dupCellsSelect = $('#duplicate-cell-ids')
   dupCellsSelect.change(() => {
     const cellId = dupCellsSelect.find(':selected').val()
     return loadCellDetails(cellId)
   })
-  updatePageThreshold()
 }
 
 const updatePageThreshold = () => { page.threshold = parseInt($('#threshold').val()) }
@@ -85,11 +93,13 @@ const updatePlot = () => {
   showLoader()
   return getEncodingIteration(page.encodingId, page.iteration)
     .then(encIteration => {
+      page.cids = encIteration.cids
+      page.originalColors = Array.from(encIteration.zs)
       updateDuplicates(encIteration)
-      const markers = createMarkers(encIteration)
+      const traces = createTracePoints(encIteration)
 
       const graphDiv = $('#cell-graph').get(0)
-      Plotly.newPlot(graphDiv, markers, layout, display)
+      Plotly.newPlot(graphDiv, traces, layout, display)
       graphDiv.on('plotly_click', ev => {
         const point = ev.points[0]
         const cellId = point.data.ids[point.pointIndex]
@@ -108,7 +118,7 @@ const updateDuplicates = encIteration => {
   }))
 }
 
-const createMarkers = encIteration => {
+const createTracePoints = encIteration => {
   const text = encIteration.ns.map((name, ix) => {
     const cellId = encIteration.cids[ix]
     const dups = getDuplicateEntry(cellId)
@@ -123,11 +133,7 @@ const createMarkers = encIteration => {
     mode: 'markers',
     type: 'scattergl',
     hoverinfo: 'text',
-    marker: {
-      size: 4,
-      color: encIteration.zs,
-      colorscale: 'Jet'
-    }
+    marker: createDefaultMarkerOption(encIteration.zs)
   }]
 }
 
@@ -151,12 +157,13 @@ const updateCellDetails = () => {
       .filter(gene => gene.v >= page.threshold)
       .map(gene => {
         const geneRow = template.clone()
-        geneRow.find('.ensemble').text(gene.e)
+        geneRow.find('.ensembl').text(gene.e)
         geneRow.find('.mgi').text(gene.m)
         geneRow.find('.gval').text(gene.v)
         return geneRow
       })
     )
+    formatCellGenes()
   }
 }
 
@@ -179,6 +186,32 @@ const updateCellDetailsHeader = () => {
 
 const cellDisplayName = (id, name) => `${name} (#${id})`
 
+const updateGeneFocus = row => {
+  showLoader()
+  return getGene($(row).find('.ensembl').text())
+    .then(gene => {
+      page.geneFocus = gene.e
+      formatCellGenes()
+      const newColors = page.cids.map((cellId, ix) =>
+        gene.cids.includes(cellId) ? page.originalColors[ix] : 'lightgrey'
+      )
+      const update = { marker: createDefaultMarkerOption(newColors) }
+      const graphDiv = $('#cell-graph').get(0)
+      Plotly.restyle(graphDiv, update)
+    })
+}
+
+const formatCellGenes = () => {
+  const tableRows = $('tr.gene-template')
+  tableRows.removeClass('highlight')
+  tableRows.each((_, v) => {
+    const row = $(v)
+    if (row.find('.ensembl').text() === page.geneFocus) {
+      row.addClass('highlight')
+    }
+  })
+}
+
 const apiGet = sub => $.get(`${page.basePath}/api/${sub}`)
 
 const ensureEncoding = () => page.encoding
@@ -189,6 +222,8 @@ const ensureEncoding = () => page.encoding
 const getEncodingIteration = (encId, it) => apiGet(`encit/${encId}/${it}`)
 const getCell = cid => ensureEncoding()
   .then(() => apiGet(`cell/${page.encoding.srcs.barcodes}/${cid}`))
+const getGene = ensembl => ensureEncoding()
+  .then(() => apiGet(`gene/${page.encoding.srcs.barcodes}/${ensembl}`))
 
 const showLoader = () => $('#loader').removeClass('d-none')
 const hideLoader = () => $('#loader').addClass('d-none')

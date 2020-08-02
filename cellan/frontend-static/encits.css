@@ -6,7 +6,7 @@ body {
   position: absolute;
   z-index: 1;
   background-color: white;
-  border-bottom: 3px solid gray;
+  border-bottom: 2px solid gray;
   border-right: 3px solid gray;
   padding: 0.2rem 0.5rem;
 }
@@ -38,4 +38,16 @@ body {
   100% {
     transform: rotate(360deg);
   }
+}
+
+tbody tr {
+  cursor: pointer;
+}
+
+tbody tr:hover {
+  background-color: #efefef;
+}
+
+tbody tr.highlight {
+  background-color: #dfdfdf;
 }
