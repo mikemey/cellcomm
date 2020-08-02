@@ -11,4 +11,5 @@ DB_NAME="cellcomm-stage"
 
 mongodump --db="${DB_NAME}" --collection="encs" --archive | mongorestore --port=${SSH_PORT} --archive
 mongodump --db="${DB_NAME}" --collection="encits" --archive | mongorestore --port=${SSH_PORT} --archive
+mongodump --db="${DB_NAME}" --collection="genes" --archive | mongorestore --port=${SSH_PORT} --archive
 
