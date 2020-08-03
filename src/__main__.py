@@ -44,7 +44,7 @@ def create_interceptors(log_dir, run_id, trainer, sources):
     return combined_interceptor([
         ics.print_losses,
         ics.save_losses(),
-        offset_iterations(1000, skip_iterations(40, db_rec.create_interceptor(trainer)))
+        offset_iterations(100, skip_iterations(20, db_rec.create_interceptor(trainer)))
         # lambda _, __: print('-|')
     ])
 
@@ -56,7 +56,7 @@ def check_log_dir(log_dir):
     log_path.mkdir(parents=True)
 
 
-RUN_ID = 'TAC4-LWR20000'
+RUN_ID = 'TAC4-WR10x10k'
 DATA_SOURCE = SOURCES[1]
 LOG_ID_TEMPLATE = '{}_' + RUN_ID + '_e{}'
 
@@ -70,7 +70,7 @@ def run_training(batch_size=128):
     check_log_dir(log_dir)
     trainer = CellTraining(data_source, batch_size=batch_size, encoding_size=encoding_size)
     interceptors = create_interceptors(log_dir, RUN_ID, trainer, DATA_SOURCE)
-    trainer.run(20000, interceptor=interceptors)
+    trainer.run(10000, interceptor=interceptors)
 
 
 def store_converted_cell_file(matrix_file, cell_file):
