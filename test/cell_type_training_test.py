@@ -10,6 +10,7 @@ TEST_MATRIX_FILE = os.path.join(os.path.dirname(__file__), 'example_matrix.mtx')
 TEST_BATCH_SIZE = 3
 TEST_GENE_COUNT = 5
 TEST_ENCODING_SIZE = 8
+TEST_BATCHES_PER_ITERATION = 4
 TEST_MATRIX_CONTENT = [
     # gene: 1, 2, 3, 4, 5
     [0, 1, 6, 1, 11],
@@ -23,7 +24,10 @@ TEST_MATRIX_CONTENT = [
 class CellTrainingTestCase(TFTestCase):
     def setUp(self):
         self.cell_batch = load_matrix(TEST_MATRIX_FILE)
-        self.trainer = CellTraining(self.cell_batch, TEST_BATCH_SIZE, TEST_ENCODING_SIZE)
+        self.trainer = CellTraining(
+            self.cell_batch, TEST_BATCH_SIZE, TEST_ENCODING_SIZE,
+            batches_per_iteration=TEST_BATCHES_PER_ITERATION
+        )
 
     def test_load_matrix_and_pivot(self):
         self.assertEqual((5, TEST_GENE_COUNT), self.cell_batch.shape)
@@ -48,15 +52,15 @@ class CellTrainingTestCase(TFTestCase):
         self.trainer.network.trainings_step = trainings_step_mock = MagicMock(return_value=test_losses)
 
         test_iterations = 6
+        test_batch_iterations = test_iterations * TEST_BATCHES_PER_ITERATION
         self.trainer.run(test_iterations, None)
-        self.assertEqual(sample_mock.call_count, test_iterations)
+        self.assertEqual(sample_mock.call_count, test_batch_iterations)
         trainings_step_mock.assert_called_with(test_data)
-        self.assertEqual(trainings_step_mock.call_count, test_iterations)
+        self.assertEqual(trainings_step_mock.call_count, test_batch_iterations)
 
     def test_training_runs_interceptor(self):
         intercept_mock = MagicMock()
-        train_step_result = 1, 2, 3
-        self.trainer.network.trainings_step = MagicMock(return_value=train_step_result)
+        self.trainer.network.trainings_step = MagicMock(return_value=(1, 2, 3))
         self.trainer.run(3, intercept_mock)
 
-        intercept_mock.assert_called_with(2, train_step_result)
+        intercept_mock.assert_called_with(2, (4, 8, 12))

@@ -27,9 +27,10 @@ def load_cells(cells_file, verbose=False):
 
 
 class CellTraining:
-    def __init__(self, data, batch_size, encoding_size):
+    def __init__(self, data, batch_size, encoding_size, batches_per_iteration=10):
         self.batch_size = batch_size
         self.data = data
+        self.batches_per_iteration = batches_per_iteration
         self.network = ContinuousCellBiGan(encoding_size, gene_size=self.data.shape[1])
         # self.network = ClassifyCellBiGan(encoding_size, gene_size=self.data.shape[1])
 
@@ -38,7 +39,12 @@ class CellTraining:
 
     def run(self, iterations, interceptor: Callable[[int, Any], None] = None):
         for it in range(iterations):
-            batch = self.sample_cell_data()
-            step_result = self.network.trainings_step(batch)
+            g_losses = e_losses = d_losses = 0
+            for batch_it in range(self.batches_per_iteration):
+                batch = self.sample_cell_data()
+                gl, el, dl = self.network.trainings_step(batch)
+                g_losses += gl
+                e_losses += el
+                d_losses += dl
             if interceptor:
-                interceptor(it, step_result)
+                interceptor(it, (g_losses, e_losses, d_losses))
