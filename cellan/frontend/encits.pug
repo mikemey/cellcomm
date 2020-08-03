@@ -30,6 +30,7 @@ block content
           thead
             tr
               td.ensembl.w-50(scope="row")= 'Ensembl'
+                button#clear-focus.btn.btn-outline-danger.d-none(type="button" onclick="updateGeneFocus(null)")= 'clear filter'
               td.mgi= 'MGI'
               td.gval.text-right= 'value'
             tr#single-cell-row.text-center

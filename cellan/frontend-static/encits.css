@@ -51,3 +51,11 @@ tbody tr:hover {
 tbody tr.highlight {
   background-color: #dfdfdf;
 }
+
+#clear-focus {
+  padding: 0.05rem .5rem;
+  font-size: .6rem;
+  border-radius: .2rem;
+  float: right;
+  margin-right: 1rem;
+}

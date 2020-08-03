@@ -187,18 +187,30 @@ const updateCellDetailsHeader = () => {
 const cellDisplayName = (id, name) => `${name} (#${id})`
 
 const updateGeneFocus = row => {
-  showLoader()
-  return getGene($(row).find('.ensembl').text())
-    .then(gene => {
-      page.geneFocus = gene.e
-      formatCellGenes()
-      const newColors = page.cids.map((cellId, ix) =>
-        gene.cids.includes(cellId) ? page.originalColors[ix] : 'lightgrey'
-      )
-      const update = { marker: createDefaultMarkerOption(newColors) }
-      const graphDiv = $('#cell-graph').get(0)
-      Plotly.restyle(graphDiv, update)
-    })
+  const geneId = $(row).find('.ensembl').text()
+  if (!geneId || geneId === page.geneFocus) {
+    hideClearFilter()
+    page.geneFocus = null
+    restylePlot(page.originalColors)
+  } else {
+    showClearFilter()
+    showLoader()
+    return getGene($(row).find('.ensembl').text())
+      .then(gene => {
+        page.geneFocus = gene.e
+        const newColors = page.cids.map((cellId, ix) =>
+          gene.cids.includes(cellId) ? page.originalColors[ix] : 'lightgrey'
+        )
+        restylePlot(newColors)
+      })
+  }
+}
+
+const restylePlot = newColors => {
+  formatCellGenes()
+  const update = { marker: createDefaultMarkerOption(newColors) }
+  const graphDiv = $('#cell-graph').get(0)
+  Plotly.restyle(graphDiv, update)
 }
 
 const formatCellGenes = () => {
@@ -237,3 +249,6 @@ const showDuplicateCells = () => {
   $('#single-cell-row').addClass('d-none')
   $('#duplicate-cells-row').removeClass('d-none')
 }
+
+const showClearFilter = () => $('#clear-focus').removeClass('d-none')
+const hideClearFilter = () => $('#clear-focus').addClass('d-none')
