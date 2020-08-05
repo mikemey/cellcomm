@@ -21,6 +21,29 @@ const display = {
   displaylogo: false
 }
 
+const traces = (ids, text, x, y, z) => [{
+  x: [],
+  y: [],
+  visible: false,
+  mode: 'markers',
+  type: 'scattergl',
+  hoverinfo: 'none',
+  marker: {
+    size: 14,
+    color: 'lightgray',
+    line: { color: 'darkgray', width: 2 }
+  }
+}, {
+  ids,
+  text,
+  x,
+  y,
+  mode: 'markers',
+  type: 'scattergl',
+  hoverinfo: 'text',
+  marker: createDefaultMarkerOption(z)
+}]
+
 const createDefaultMarkerOption = color => {
   return { size: 4, color, colorscale: 'Jet', cmin: 0, cmax: 255 }
 }
@@ -102,8 +125,9 @@ const updatePlot = () => {
       Plotly.newPlot(graphDiv, traces, layout, display)
       graphDiv.on('plotly_click', ev => {
         const point = ev.points[0]
-        const cellId = point.data.ids[point.pointIndex]
-        loadCellDetails(cellId)
+        if (!point.id) { return }
+        highlightPoint(point.x, point.y)
+        loadCellDetails(point.id)
       })
       graphDiv.on('plotly_afterplot', hideLoader)
     })
@@ -125,16 +149,13 @@ const createTracePoints = encIteration => {
     const countText = (dups && `&nbsp;&nbsp;&nbsp;&nbsp;(${dups.cids.length} dups)`) || ''
     return `${name}<br>${cellId}${countText}`
   })
-  return [{
-    ids: encIteration.cids,
-    text,
-    x: encIteration.xs,
-    y: encIteration.ys,
-    mode: 'markers',
-    type: 'scattergl',
-    hoverinfo: 'text',
-    marker: createDefaultMarkerOption(encIteration.zs)
-  }]
+  return traces(encIteration.cids, text, encIteration.xs, encIteration.ys, encIteration.zs)
+}
+
+const highlightPoint = (x, y) => {
+  const update = { x: [[x]], y: [[y]], visible: true }
+  const graphDiv = $('#cell-graph').get(0)
+  Plotly.restyle(graphDiv, update, [0])
 }
 
 const loadCellDetails = cellId => {
@@ -191,7 +212,7 @@ const updateGeneFocus = row => {
   if (!geneId || geneId === page.geneFocus) {
     hideClearFilter()
     page.geneFocus = null
-    restylePlot(page.originalColors)
+    recolorCellPoints(page.originalColors)
   } else {
     showClearFilter()
     showLoader()
@@ -201,16 +222,16 @@ const updateGeneFocus = row => {
         const newColors = page.cids.map((cellId, ix) =>
           gene.cids.includes(cellId) ? page.originalColors[ix] : 'lightgrey'
         )
-        restylePlot(newColors)
+        recolorCellPoints(newColors)
       })
   }
 }
 
-const restylePlot = newColors => {
+const recolorCellPoints = newColors => {
   formatCellGenes()
   const update = { marker: createDefaultMarkerOption(newColors) }
   const graphDiv = $('#cell-graph').get(0)
-  Plotly.restyle(graphDiv, update)
+  Plotly.restyle(graphDiv, update, [1])
 }
 
 const formatCellGenes = () => {

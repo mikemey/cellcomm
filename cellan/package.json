@@ -1,6 +1,6 @@
 {
   "name": "cell-analysis",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "Cell encoding analysis backend",
   "engines": {
     "node": ">=10"

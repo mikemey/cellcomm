@@ -7,5 +7,5 @@ pip3 install -r requirements.txt
 
 #### Run:
 ```bash
-python3 src/cellcomm.py
+python3 src
 ```
