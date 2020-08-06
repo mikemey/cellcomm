@@ -45,7 +45,17 @@ const traces = (ids, text, x, y, z) => [{
 }]
 
 const createDefaultMarkerOption = color => {
-  return { size: 4, color, colorscale: 'Jet', cmin: 0, cmax: 255 }
+  return {
+    size: 4,
+    color,
+    colorscale: 'Portland',
+    cmin: 0,
+    cmax: 255,
+    showscale: true,
+    colorbar: {
+      thickness: 7, xpad: 2, ypad: 0, len: 0.95, y: 0.95, yanchor: 'top'
+    }
+  }
 }
 
 const page = {
