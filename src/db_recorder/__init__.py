@@ -50,7 +50,7 @@ class DbRecorder:
             '_id': self.enc_run_id,
             'date': datetime.now(),
             'defit': 0,
-            'showits': [0],
+            'showits': [],
             'srcs': {
                 'matrix': get_file_name(self.matrix_file),
                 'barcodes': self.source_id,
@@ -73,6 +73,7 @@ class DbRecorder:
 
     def create_interceptor(self, trainer):
         assert self.barcodes, 'Cannot store iterations without barcodes!'
+        show_iterations = []
 
         def intercept(it, _):
             assert it not in self.__processed_its, f'duplicate iteration {it}'
@@ -95,8 +96,11 @@ class DbRecorder:
                 'zs': coords[:, 2].tolist(),
                 'ds': find_duplicate_ids(coords)
             })
+
+            show_iterations.append(it)
             self.__coll(ENCODINGS_COLLECTION).update_one(
-                {'_id': self.enc_run_id}, {'$set': {'defit': it}}
+                {'_id': self.enc_run_id},
+                {'$set': {'defit': it, 'showits': show_iterations}}
             )
 
         return intercept

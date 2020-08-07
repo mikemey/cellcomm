@@ -45,7 +45,7 @@ class DbRecorderCase(DbTestCase):
         age = datetime.now() - enc_run['date']
         self.assertLess(age.total_seconds(), 1)
         self.assertEqual(enc_run['defit'], 0)
-        self.assertEqual(enc_run['showits'], [0])
+        self.assertEqual(enc_run['showits'], [])
         db_srcs = enc_run['srcs']
         self.assertEqual(db_srcs['matrix'], TEST_MATRIX)
         self.assertEqual(db_srcs['barcodes'], TEST_BARCODES)
@@ -121,7 +121,7 @@ class DbRecorderCase(DbTestCase):
         self.assertEqual(str(cm.exception), f'Cannot store iterations without barcodes!')
 
     def test_intercept_stores_iteration(self):
-        test_it = 2009
+        test_it_1, test_it_2 = 2009, 3009
         test_encs = np.array([
             [0.5, 0.5, 0.0], [1.0, 0.2, 1.0], [0.5, 0.5, 0.5],
             [0.5, 0.5, 0.5], [1.0, 0.2, 1.0]
@@ -130,14 +130,16 @@ class DbRecorderCase(DbTestCase):
         trainer_mock.network.encoding_prediction = MagicMock(return_value=test_encs)
         self.recorder.store_encoding_run()
         self.recorder.load_barcodes()
-        self.recorder.create_interceptor(trainer_mock)(test_it, UNUSED_DATA)
+        interceptor = self.recorder.create_interceptor(trainer_mock)
+        interceptor(test_it_1, UNUSED_DATA)
+        interceptor(test_it_2, UNUSED_DATA)
 
         iteration = list(self._coll(ITERATIONS_COLLECTION).find(
-            {'eid': TEST_ENC_RUN_ID, 'it': test_it}, {'_id': 0}
+            {'eid': TEST_ENC_RUN_ID}, {'_id': 0}
         ))
-        self.assertEqual(1, len(iteration))
+        self.assertEqual(2, len(iteration))
         self.assertDictEqual(iteration[0], {
-            'eid': TEST_ENC_RUN_ID, 'it': test_it,
+            'eid': TEST_ENC_RUN_ID, 'it': test_it_1,
             'cids': [1, 2, 3, 4, 5],
             'ns': ['AAACCTGGTGTCCTCT-1', 'AAACGGGCAGGTCTCG-1', 'AAACGGGTCCGCTGTT-1', 'AAACGGGTCTGATTCT-1', 'AAAGATGGTGATAAAC-1'],
             'xs': [127.5, 255, 127.5, 127.5, 255],
@@ -146,10 +148,9 @@ class DbRecorderCase(DbTestCase):
             'ds': [[3, 4], [2, 5]]
         })
 
-        encoding = self._coll(ENCODINGS_COLLECTION).find_one(
-            {'_id': TEST_ENC_RUN_ID}, {'_id': 0, 'defit': 1}
-        )
-        self.assertEqual(test_it, encoding['defit'])
+        encoding = self._coll(ENCODINGS_COLLECTION).find_one({'_id': TEST_ENC_RUN_ID})
+        self.assertEqual(test_it_2, encoding['defit'])
+        self.assertListEqual([test_it_1, test_it_2], encoding['showits'])
 
     def test_invalid_data_length_intercept(self):
         trainer_mock = MagicMock()
