@@ -5,8 +5,13 @@ block htmlhead
   link(rel="stylesheet" href=`${basepath}/static/encits.css`)
 
 block content
-  .home-link
-    a(href=basepath)= '<< back'
+  .menu
+    div.text-center
+      a(href=basepath)= '<< back'
+    div
+      button#t2d.btn.btn-sm.btn-link.disabled(type="button")= '2D'
+      span= ' | '
+      button#t3d.btn.btn-sm.btn-link(type="button")= '3D'
   .container-fluid
     .row
       .col-9

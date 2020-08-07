@@ -1,5 +1,19 @@
 /* global $ Plotly location history */
 
+const page = {
+  basePath: null,
+  encodingId: 0,
+  encoding: null,
+  iteration: 0,
+  duplicatesLookup: null,
+  cell: null,
+  geneFocus: null,
+  threshold: 0,
+  cids: null,
+  originalColors: null,
+  graphType: null
+}
+
 const transparentColor = 'rgba(0,0,0,0)'
 const layout = {
   showlegend: false,
@@ -24,9 +38,10 @@ const display = {
 const traces = (ids, text, x, y, z) => [{
   x: [],
   y: [],
+  z: [],
   visible: false,
   mode: 'markers',
-  type: 'scattergl',
+  type: page.graphType,
   hoverinfo: 'none',
   marker: {
     size: 14,
@@ -38,8 +53,9 @@ const traces = (ids, text, x, y, z) => [{
   text,
   x,
   y,
+  z,
   mode: 'markers',
-  type: 'scattergl',
+  type: page.graphType,
   hoverinfo: 'text',
   marker: createDefaultMarkerOption(z)
 }]
@@ -58,25 +74,13 @@ const createDefaultMarkerOption = color => {
   }
 }
 
-const page = {
-  basePath: null,
-  encodingId: 0,
-  encoding: null,
-  iteration: 0,
-  duplicatesLookup: null,
-  cell: null,
-  geneFocus: null,
-  threshold: 0,
-  cids: null,
-  originalColors: null
-}
-
 const getDuplicateEntry = cellId => page.duplicatesLookup.find(d => d.cid === cellId)
 
 $(() => {
   setPageDataFromUrl()
   addLoadListeners()
   loadIterationsSelect()
+  addGraphTypeListeners()
   updatePlot()
   $(window).on('popstate', () => {
     setPageDataFromUrl()
@@ -122,6 +126,25 @@ const updateIteration = () => {
   updatePlot()
 }
 
+const graphType = {
+  _2D: 'scattergl',
+  _3D: 'scatter3d'
+}
+
+const addGraphTypeListeners = () => {
+  page.graphType = graphType._2D
+  $('#t2d').click(() => {
+    page.graphType = graphType._2D
+    show3DGraphType()
+    updatePlot()
+  })
+  $('#t3d').click(() => {
+    page.graphType = graphType._3D
+    show2DGraphType()
+    updatePlot()
+  })
+}
+
 const updatePlot = () => {
   showLoader()
   return getEncodingIteration(page.encodingId, page.iteration)
@@ -131,12 +154,12 @@ const updatePlot = () => {
       updateDuplicates(encIteration)
       const traces = createTracePoints(encIteration)
 
-      const graphDiv = $('#cell-graph').get(0)
+      const graphDiv = getPlotDiv()
       Plotly.newPlot(graphDiv, traces, layout, display)
       graphDiv.on('plotly_click', ev => {
         const point = ev.points[0]
         if (!point.id) { return }
-        highlightPoint(point.x, point.y)
+        highlightPoint(point.x, point.y, point.z)
         loadCellDetails(point.id)
       })
       graphDiv.on('plotly_afterplot', hideLoader)
@@ -162,10 +185,9 @@ const createTracePoints = encIteration => {
   return traces(encIteration.cids, text, encIteration.xs, encIteration.ys, encIteration.zs)
 }
 
-const highlightPoint = (x, y) => {
-  const update = { x: [[x]], y: [[y]], visible: true }
-  const graphDiv = $('#cell-graph').get(0)
-  Plotly.restyle(graphDiv, update, [0])
+const highlightPoint = (x, y, z) => {
+  const update = { x: [[x]], y: [[y]], z: [[z]], visible: true }
+  setTimeout(() => Plotly.restyle(getPlotDiv(), update, [0]), 200)
 }
 
 const loadCellDetails = cellId => {
@@ -240,8 +262,7 @@ const updateGeneFocus = row => {
 const recolorCellPoints = newColors => {
   formatCellGenes()
   const update = { marker: createDefaultMarkerOption(newColors) }
-  const graphDiv = $('#cell-graph').get(0)
-  Plotly.restyle(graphDiv, update, [1])
+  Plotly.restyle(getPlotDiv(), update, [1])
 }
 
 const formatCellGenes = () => {
@@ -255,6 +276,7 @@ const formatCellGenes = () => {
   })
 }
 
+// --- API calls ----------------------------
 const apiGet = sub => $.get(`${page.basePath}/api/${sub}`)
 
 const ensureEncoding = () => page.encoding
@@ -268,6 +290,8 @@ const getCell = cid => ensureEncoding()
 const getGene = ensembl => ensureEncoding()
   .then(() => apiGet(`gene/${page.encoding.srcs.barcodes}/${ensembl}`))
 
+// --- UI elements access ----------------------------
+const getPlotDiv = () => $('#cell-graph').get(0)
 const showLoader = () => $('#loader').removeClass('d-none')
 const hideLoader = () => $('#loader').addClass('d-none')
 
@@ -283,3 +307,13 @@ const showDuplicateCells = () => {
 
 const showClearFilter = () => $('#clear-focus').removeClass('d-none')
 const hideClearFilter = () => $('#clear-focus').addClass('d-none')
+
+const show2DGraphType = () => {
+  $('#t2d').removeClass('disabled')
+  $('#t3d').addClass('disabled')
+}
+
+const show3DGraphType = () => {
+  $('#t2d').addClass('disabled')
+  $('#t3d').removeClass('disabled')
+}
