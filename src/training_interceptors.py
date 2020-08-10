@@ -1,6 +1,4 @@
 import pathlib
-import pickle
-from datetime import datetime
 
 import atexit
 import matplotlib.pyplot as plt
@@ -12,34 +10,9 @@ from mpl_toolkits.mplot3d import Axes3D
 from tensorflow import convert_to_tensor
 from tensorflow.python.keras import backend
 
-from cell_type_training import CellTraining
 from support.data_sink import DataSink
 
 POINTS_SIZE = 0.3
-
-
-def combined_interceptor(interceptors):
-    def call_all(it, losses):
-        for ic in interceptors:
-            ic(it, losses)
-
-    return call_all
-
-
-def skip_iterations(steps, interceptor):
-    def intercept(it, losses):
-        if (it % steps) >= (steps - 1):
-            interceptor(it, losses)
-
-    return intercept
-
-
-def offset_iterations(offset, interceptor):
-    def intercept(it, losses):
-        if it >= offset:
-            interceptor(it, losses)
-
-    return intercept
 
 
 def create_default_figure(title, it, losses):
@@ -51,7 +24,7 @@ def create_default_figure(title, it, losses):
     return fig
 
 
-class ParamInterceptors:
+class PlotIntercepts:
     def __init__(self, log_dir, run_id):
         self.log_dir = log_dir
         self.run_id = run_id
@@ -60,33 +33,6 @@ class ParamInterceptors:
 
         self.plots_dir = f'{self.log_dir}/plots'
         pathlib.Path(self.plots_dir).mkdir()
-
-    def print_losses(self, it, all_losses):
-        g_loss, e_loss, d_loss = all_losses
-        ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        print(f'[{ts}] {self.run_id} it: {it:6}  TOT: {sum(all_losses):6.3f}  G-L: {g_loss:6.3f}  E-L: {e_loss:6.3f}  D-L: {d_loss:6.3f}')
-
-    def save_losses(self):
-        graph_id = 'losses'
-        self.sink.add_graph_header(graph_id, ['iteration', 'total-loss', 'g-loss', 'e-loss', 'd-loss'])
-
-        def store_record(it, all_losses):
-            g_loss, e_loss, d_loss = all_losses
-            self.sink.add_data(graph_id, [it, sum(all_losses), g_loss, e_loss, d_loss])
-
-        return store_record
-
-    def save_accuracy(self, trainer: CellTraining):
-        graph_id = 'accuracy'
-        self.sink.add_graph_header(graph_id, ['iteration', 'pos-pct', 'neg-pct'])
-
-        def intercept(it, _):
-            batch = trainer.sample_cell_data()
-            batch_size = len(batch)
-            tp_acc, tn_acc = trainer.network.evaluate_discriminator_accuracy(batch)
-            self.sink.add_data(graph_id, [it, tp_acc / batch_size, tn_acc / batch_size])
-
-        return intercept
 
     def __figure_path(self, title, iteration):
         return f'{self.plots_dir}/{title}_{str(iteration).zfill(4)}.png'

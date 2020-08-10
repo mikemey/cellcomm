@@ -7,7 +7,8 @@ import sys
 
 from cell_type_training import CellTraining, load_matrix
 from db_recorder import DbRecorder
-from training_interceptors import ParamInterceptors, combined_interceptor, skip_iterations, offset_iterations
+from intercepts import combined_interceptors, skip_iterations, offset_iterations, print_losses, \
+    SinkIntercepts
 
 
 def data_file(file):
@@ -35,16 +36,36 @@ SOURCE_IDS = [
 
 SOURCES = [build_source(src) for src in SOURCE_IDS]
 
+RUN_ID = 'test'
+DATA_SOURCES = SOURCES[1]
+LOG_ID_TEMPLATE = '{}_' + RUN_ID + '_e{}'
 
-def create_interceptors(log_dir, run_id, trainer, sources):
-    ics = ParamInterceptors(log_dir, run_id)
-    db_rec = DbRecorder(run_id, sources)
-    db_rec.store_encoding_run()
-    db_rec.load_barcodes()
-    return combined_interceptor([
-        ics.print_losses,
-        ics.save_losses(),
-        offset_iterations(100, skip_iterations(20, db_rec.create_interceptor(trainer)))
+
+def run_training(batch_size=128):
+    data_source = load_matrix(DATA_SOURCES['matrix'], verbose=True)
+    encoding_size = 3
+
+    trainer = CellTraining(data_source, batch_size=batch_size, encoding_size=encoding_size)
+    interceptors = create_interceptors(encoding_size, trainer, DATA_SOURCES)
+    trainer.run(1, interceptors)
+
+
+def create_interceptors(encoding_size, trainer, sources):
+    now = datetime.now().strftime('%m-%d-%H%M')
+    full_run_id = LOG_ID_TEMPLATE.format(now, encoding_size)
+    log_dir = log_file(full_run_id)
+    check_log_dir(log_dir)
+
+    # ics = ParamInterceptors(log_dir, RUN_ID)
+    sink = SinkIntercepts(log_dir)
+    # db_rec = DbRecorder(RUN_ID, sources)
+    # db_rec.store_encoding_run()
+    # db_rec.load_barcodes()
+    return combined_interceptors([
+        print_losses(full_run_id),
+        sink.save_losses()
+        # ics.save_losses(),
+        # offset_iterations(100, skip_iterations(20, db_rec.create_interceptor(trainer)))
         # lambda _, __: print('-|')
     ])
 
@@ -54,23 +75,6 @@ def check_log_dir(log_dir):
     if log_path.exists():
         raise AssertionError(f'duplicate run-id, log-dir: {log_dir}')
     log_path.mkdir(parents=True)
-
-
-RUN_ID = 'TAC4-WR10x10k'
-DATA_SOURCE = SOURCES[1]
-LOG_ID_TEMPLATE = '{}_' + RUN_ID + '_e{}'
-
-
-def run_training(batch_size=128):
-    data_source = load_matrix(DATA_SOURCE['matrix'], verbose=True)
-    encoding_size = 3
-    now = datetime.now().strftime('%m-%d-%H%M')
-    log_dir = log_file(LOG_ID_TEMPLATE.format(now, encoding_size))
-
-    check_log_dir(log_dir)
-    trainer = CellTraining(data_source, batch_size=batch_size, encoding_size=encoding_size)
-    interceptors = create_interceptors(log_dir, RUN_ID, trainer, DATA_SOURCE)
-    trainer.run(10000, interceptor=interceptors)
 
 
 def store_converted_cell_file(matrix_file, cell_file):
