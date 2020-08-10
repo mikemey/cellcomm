@@ -2,6 +2,7 @@ from datetime import datetime
 
 from .plot_intercepts import PlotIntercepts
 from .sink_intercepts import SinkIntercepts
+from .db_recorder import DbRecorder
 
 
 def combined_interceptors(interceptors):
