@@ -6,9 +6,9 @@ from datetime import datetime
 import sys
 
 from cell_type_training import CellTraining, load_matrix
-from db_recorder import DbRecorder
-from intercepts import combined_interceptors, skip_iterations, offset_iterations, print_losses, \
-    SinkIntercepts
+from intercepts import combined_interceptors, \
+    skip_iterations, offset_iterations, print_losses, \
+    SinkIntercepts, DbRecorder
 
 
 def data_file(file):
@@ -56,17 +56,13 @@ def create_interceptors(encoding_size, trainer, sources):
     log_dir = log_file(full_run_id)
     check_log_dir(log_dir)
 
-    # ics = ParamInterceptors(log_dir, RUN_ID)
     sink = SinkIntercepts(log_dir)
-    # db_rec = DbRecorder(RUN_ID, sources)
-    # db_rec.store_encoding_run()
-    # db_rec.load_barcodes()
+    db_rec = DbRecorder(RUN_ID, sources)
+    db_rec.setup()
     return combined_interceptors([
         print_losses(full_run_id),
-        sink.save_losses()
-        # ics.save_losses(),
-        # offset_iterations(100, skip_iterations(20, db_rec.create_interceptor(trainer)))
-        # lambda _, __: print('-|')
+        sink.save_losses(),
+        offset_iterations(0, skip_iterations(1, db_rec.create_interceptor(trainer)))
     ])
 
 

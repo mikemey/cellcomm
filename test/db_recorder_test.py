@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import numpy as np
 
-from db_recorder import DbRecorder, \
+from intercepts.db_recorder import DbRecorder, \
     ENCODINGS_COLLECTION, ITERATIONS_COLLECTION, CELLS_COLLECTION, GENES_COLLECTION
 from db_test import DbTestCase, TEST_DB
 

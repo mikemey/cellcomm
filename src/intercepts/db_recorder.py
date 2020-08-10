@@ -5,7 +5,7 @@ import numpy as np
 from pymongo import MongoClient
 from pymongo.collection import Collection
 
-from db_recorder.import_barcodes import import_barcodes
+from .import_barcodes import import_barcodes
 
 MONGO_URL = 'mongodb://localhost:27017/'
 MONGO_DB = 'cellcomm-update'
@@ -37,6 +37,10 @@ class DbRecorder:
         self.cell_ids = None
         self.__db = MongoClient(MONGO_URL)[self.mongo_db]
         self.__processed_its = []
+
+    def setup(self):
+        self.store_encoding_run()
+        self.load_barcodes()
 
     def __coll(self, coll_name) -> Collection:
         return self.__db[coll_name]
