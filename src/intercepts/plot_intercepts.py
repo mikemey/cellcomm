@@ -1,6 +1,5 @@
 import pathlib
 
-import atexit
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -9,8 +8,6 @@ import umap
 from mpl_toolkits.mplot3d import Axes3D
 from tensorflow import convert_to_tensor
 from tensorflow.python.keras import backend
-
-from support.data_sink import DataSink
 
 POINTS_SIZE = 0.3
 
@@ -28,8 +25,6 @@ class PlotIntercepts:
     def __init__(self, log_dir, run_id):
         self.log_dir = log_dir
         self.run_id = run_id
-        self.sink = DataSink(log_dir=self.log_dir)
-        atexit.register(self.sink.drain_data)
 
         self.plots_dir = f'{self.log_dir}/plots'
         pathlib.Path(self.plots_dir).mkdir()

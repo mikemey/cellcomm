@@ -1,7 +1,6 @@
 import atexit
 
-from cell_type_training import CellTraining
-from support.data_sink import DataSink
+from .data_sink import DataSink
 
 
 class SinkIntercepts:
@@ -19,7 +18,7 @@ class SinkIntercepts:
 
         return store_record
 
-    def save_accuracy(self, trainer: CellTraining):
+    def save_accuracy(self, trainer):
         graph_id = 'accuracy'
         self.sink.add_graph_header(graph_id, ['iteration', 'pos-pct', 'neg-pct'])
 
