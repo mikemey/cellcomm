@@ -58,8 +58,7 @@ class DbRecorderCase(DbTestCase):
         self.assertEqual(str(cm.exception), f'Encoding run id already exists: {TEST_ENC_RUN_ID}')
 
     def test_stores_barcodes_in_cells(self):
-        self.recorder.store_encoding_run()
-        self.recorder.load_barcodes()
+        self.recorder.setup()
         cells = list(self._coll(CELLS_COLLECTION).find({'sid': TEST_BARCODES}))
         self.assertEqual(5, len(cells))
         self.__assert_cell(cells[0], 1, 'AAACCTGGTGTCCTCT-1', [
@@ -84,14 +83,12 @@ class DbRecorderCase(DbTestCase):
         test_cells = [{'sid': TEST_BARCODES, 'n': name1}, {'sid': TEST_BARCODES, 'n': name2}]
         self._coll(CELLS_COLLECTION).insert_many(test_cells)
 
-        self.recorder.store_encoding_run()
-        self.recorder.load_barcodes()
+        self.recorder.setup()
         self.assertEqual([name1, name2], self.recorder.barcodes)
         self.assertEqual([1, 2], self.recorder.cell_ids)
 
     def test_stores_genes(self):
-        self.recorder.store_encoding_run()
-        self.recorder.load_barcodes()
+        self.recorder.setup()
         genes = list(self._coll(GENES_COLLECTION).find({'sid': TEST_BARCODES}))
         self.assertEqual(5, len(genes))
         del genes[0]['_id']
@@ -128,8 +125,7 @@ class DbRecorderCase(DbTestCase):
         ])
         trainer_mock = MagicMock()
         trainer_mock.network.encoding_prediction = MagicMock(return_value=test_encs)
-        self.recorder.store_encoding_run()
-        self.recorder.load_barcodes()
+        self.recorder.setup()
         interceptor = self.recorder.create_interceptor(trainer_mock)
         interceptor(test_it_1, UNUSED_DATA)
         interceptor(test_it_2, UNUSED_DATA)
@@ -157,8 +153,7 @@ class DbRecorderCase(DbTestCase):
         test_data = np.array([[], [], [], []])
         trainer_mock.network.encoding_prediction = MagicMock(return_value=test_data)
 
-        self.recorder.store_encoding_run()
-        self.recorder.load_barcodes()
+        self.recorder.setup()
         with self.assertRaises(AssertionError) as cm:
             self.recorder.create_interceptor(trainer_mock)(2, UNUSED_DATA)
         self.assertEqual(str(cm.exception), f'encodings + barcodes have different length: 4 != 5')
@@ -168,8 +163,7 @@ class DbRecorderCase(DbTestCase):
         test_data = np.array([[1, 2], [1, 2], [1, 2], [1, 2], [1, 2]])
         trainer_mock.network.encoding_prediction = MagicMock(return_value=test_data)
 
-        self.recorder.store_encoding_run()
-        self.recorder.load_barcodes()
+        self.recorder.setup()
         with self.assertRaises(AssertionError) as cm:
             self.recorder.create_interceptor(trainer_mock)(2, UNUSED_DATA)
         self.assertEqual(str(cm.exception), f'encodings vector length = 2, not in x, y, z format')
@@ -182,8 +176,7 @@ class DbRecorderCase(DbTestCase):
         ])
         trainer_mock = MagicMock()
         trainer_mock.network.encoding_prediction = MagicMock(return_value=test_encs)
-        self.recorder.store_encoding_run()
-        self.recorder.load_barcodes()
+        self.recorder.setup()
         intercept = self.recorder.create_interceptor(trainer_mock)
         intercept(test_it, UNUSED_DATA)
         with self.assertRaises(AssertionError) as cm:
