@@ -23,7 +23,7 @@
     "mongodb": "^3.6.0",
     "moment": "^2.27.0",
     "morgan": "1.10.0",
-    "pug": "^3.0.0"
+    "pug": "^3.0.1"
   },
   "devDependencies": {
     "chai": "4.2.0",
